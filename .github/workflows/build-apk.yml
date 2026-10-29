@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - 'PliegaPro.html'
-      - 'Logotipo de PleegaPro.png'
+      - 'PliegaPro_logo.png'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -30,8 +30,11 @@ jobs:
         run: |
           echo "Archivos en la raíz:"
           ls -la
+
           test -f "PliegaPro.html"
-          test -f "Logotipo de PleegaPro.png"
+          test -f "PliegaPro_logo.png"
+
+          echo "HTML y logotipo encontrados correctamente."
 
       - name: Preparar herramienta para iconos
         shell: bash
@@ -52,14 +55,15 @@ jobs:
           from PIL import Image, ImageOps
           from pathlib import Path
 
-          source = Path("Logotipo de PleegaPro.png")
+          source = Path("PliegaPro_logo.png")
 
           if not source.is_file():
               raise SystemExit(
-                  "ERROR: No se encuentra Logotipo de PleegaPro.png"
+                  "ERROR: No se encuentra PliegaPro_logo.png"
               )
 
-          image = Image.open(source).convert("RGBA")
+          with Image.open(source) as original:
+              image = original.convert("RGBA")
 
           sizes = {
               "mipmap-mdpi": 48,
@@ -73,16 +77,16 @@ jobs:
               output_dir = Path("app/src/main/res") / folder
               output_dir.mkdir(parents=True, exist_ok=True)
 
-              square = ImageOps.fit(
+              icon = ImageOps.fit(
                   image,
                   (size, size),
                   method=Image.Resampling.LANCZOS
               )
 
-              square.save(output_dir / "ic_launcher.png", "PNG")
+              icon.save(output_dir / "ic_launcher.png", format="PNG")
               print(f"Icono creado: {folder}/ic_launcher.png")
 
-          print("Todos los iconos se han generado correctamente.")
+          print("Iconos Android generados correctamente.")
           PY
 
       - name: Crear estructura Android
@@ -278,6 +282,7 @@ jobs:
             -o /tmp/gradle.zip
 
           unzip -q /tmp/gradle.zip -d /tmp
+
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
       - name: Compilar APK
