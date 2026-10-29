@@ -4,10 +4,10 @@ on:
 workflow_dispatch:
 push:
 paths:
-- 'PliegaPro.html'
-- 'PliegaPro_logo.png'
-- 'PliegaPro.apk'
-- '.github/workflows/build-apk.yml'
+- "PliegaPro.html"
+- "PliegaPro_logo.png"
+- "PliegaPro.apk"
+- ".github/workflows/build-apk.yml"
 
 permissions:
 contents: read
@@ -24,7 +24,7 @@ steps:
     uses: actions/setup-java@v4
     with:
       distribution: temurin
-      java-version: '17'
+      java-version: "17"
 
   - name: Comprobar archivos
     shell: bash
@@ -38,7 +38,7 @@ steps:
   - name: Preparar herramientas Android
     uses: android-actions/setup-android@v3
 
-  - name: Instalar herramientas de compilación
+  - name: Instalar herramientas Android
     shell: bash
     run: |
       set -e
@@ -57,6 +57,7 @@ steps:
       set -e
       python3 -m venv /tmp/icon-venv
       /tmp/icon-venv/bin/pip install Pillow
+
       mkdir -p app/src/main/res/mipmap-mdpi
       mkdir -p app/src/main/res/mipmap-hdpi
       mkdir -p app/src/main/res/mipmap-xhdpi
@@ -75,16 +76,14 @@ steps:
           "mipmap-hdpi": 72,
           "mipmap-xhdpi": 96,
           "mipmap-xxhdpi": 144,
-          "mipmap-xxxhdpi": 192
+          "mipmap-xxxhdpi": 192,
       }
 
       for folder, size in sizes.items():
           output = Path("app/src/main/res") / folder / "ic_launcher.png"
-          icon = ImageOps.fit(
-              image, (size, size),
-              method=Image.Resampling.LANCZOS
-          )
+          icon = ImageOps.fit(image, (size, size), method=Image.Resampling.LANCZOS)
           icon.save(output, format="PNG")
+
       print("Iconos creados.")
       PY
 
@@ -225,10 +224,7 @@ steps:
                       }
                       fileCallback = callback;
                       try {
-                          startActivityForResult(
-                              params.createIntent(),
-                              FILE_CHOOSER_REQUEST
-                          );
+                          startActivityForResult(params.createIntent(), FILE_CHOOSER_REQUEST);
                       } catch (Exception e) {
                           fileCallback = null;
                           return false;
@@ -236,19 +232,20 @@ steps:
                       return true;
                   }
               });
+
               webView.loadUrl("file:///android_asset/index.html");
           }
 
           @Override
-          protected void onActivityResult(
-                  int requestCode, int resultCode, Intent data) {
+          protected void onActivityResult(int requestCode, int resultCode, Intent data) {
               super.onActivityResult(requestCode, resultCode, data);
-              if (requestCode == FILE_CHOOSER_REQUEST
-                      && fileCallback != null) {
+              if (requestCode == FILE_CHOOSER_REQUEST && fileCallback != null) {
                   Uri[] results = null;
                   if (resultCode == Activity.RESULT_OK && data != null) {
                       Uri uri = data.getData();
-                      if (uri != null) results = new Uri[]{uri};
+                      if (uri != null) {
+                          results = new Uri[]{uri};
+                      }
                   }
                   fileCallback.onReceiveValue(results);
                   fileCallback = null;
