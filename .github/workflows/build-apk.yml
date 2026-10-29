@@ -27,40 +27,80 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Comprobar archivos
+      - name: Comprobar archivos necesarios
         shell: bash
         run: |
-          echo "Archivos en la raíz:"
+          set -e
+          echo "Archivos del repositorio:"
           ls -la
 
           test -f "PliegaPro.html"
           test -f "PliegaPro_logo.png"
           test -f "PliegaPro.apk"
 
-          echo "Archivos encontrados correctamente."
+          echo "Los tres archivos existen."
 
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Preparar herramientas Android
+        shell: bash
+        run: |
+          set -e
 
-      - name: Instalar herramientas de firma
-        run: sdkmanager "build-tools;35.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "Buscando sdkmanager..."
+
+          SDKMANAGER="$(command -v sdkmanager || true)"
+
+          if [ -z "$SDKMANAGER" ]; then
+            for candidate in \
+              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+              "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" \
+              "$ANDROID_HOME/tools/bin/sdkmanager"; do
+              if [ -x "$candidate" ]; then
+                SDKMANAGER="$candidate"
+                break
+              fi
+            done
+          fi
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: No se encuentra sdkmanager."
+            exit 1
+          fi
+
+          echo "Usando: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" --install "build-tools;35.0.0"
+
+          echo "Herramientas Android preparadas."
 
       - name: Comprobar firma de la APK original
         shell: bash
         run: |
-          echo "===== FIRMA DE LA APK ORIGINAL ====="
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
-            verify --verbose --print-certs PliegaPro.apk
+          set -e
+
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+
+          echo "===== APK ORIGINAL ====="
+
+          "$APKSIGNER" verify \
+            --verbose \
+            --print-certs \
+            PliegaPro.apk
 
       - name: Preparar herramienta para iconos
         shell: bash
         run: |
+          set -e
           python3 -m venv /tmp/icon-venv
           /tmp/icon-venv/bin/pip install Pillow
 
       - name: Crear iconos Android
         shell: bash
         run: |
+          set -e
+
           mkdir -p app/src/main/res/mipmap-mdpi
           mkdir -p app/src/main/res/mipmap-hdpi
           mkdir -p app/src/main/res/mipmap-xhdpi
@@ -87,12 +127,18 @@ jobs:
           for folder, size in sizes.items():
               output_dir = Path("app/src/main/res") / folder
               output_dir.mkdir(parents=True, exist_ok=True)
+
               icon = ImageOps.fit(
                   image,
                   (size, size),
                   method=Image.Resampling.LANCZOS
               )
-              icon.save(output_dir / "ic_launcher.png", format="PNG")
+
+              icon.save(
+                  output_dir / "ic_launcher.png",
+                  format="PNG"
+              )
+
               print(f"Icono creado: {folder}")
 
           print("Iconos generados correctamente.")
@@ -101,6 +147,8 @@ jobs:
       - name: Crear estructura Android
         shell: bash
         run: |
+          set -e
+
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/pliegapro/app
 
@@ -221,6 +269,7 @@ jobs:
                               WebView view,
                               ValueCallback<Uri[]> callback,
                               FileChooserParams params) {
+
                           if (fileCallback != null) {
                               fileCallback.onReceiveValue(null);
                           }
@@ -249,14 +298,17 @@ jobs:
                       int requestCode,
                       int resultCode,
                       Intent data) {
+
                   super.onActivityResult(requestCode, resultCode, data);
 
                   if (requestCode == FILE_CHOOSER_REQUEST
                           && fileCallback != null) {
+
                       Uri[] results = null;
 
                       if (resultCode == Activity.RESULT_OK && data != null) {
                           Uri uri = data.getData();
+
                           if (uri != null) {
                               results = new Uri[]{uri};
                           }
@@ -281,21 +333,34 @@ jobs:
       - name: Instalar Gradle
         shell: bash
         run: |
+          set -e
+
           curl -fsSL \
             https://services.gradle.org/distributions/gradle-8.9-bin.zip \
             -o /tmp/gradle.zip
+
           unzip -q /tmp/gradle.zip -d /tmp
+
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
       - name: Compilar APK de prueba
-        run: gradle --no-daemon assembleDebug
-
-      - name: Comprobar firma de la nueva APK
         shell: bash
         run: |
-          echo "===== FIRMA DE LA NUEVA APK ====="
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
-            verify --verbose --print-certs \
+          set -e
+          gradle --no-daemon assembleDebug
+
+      - name: Comprobar firma de la APK nueva
+        shell: bash
+        run: |
+          set -e
+
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+
+          echo "===== APK NUEVA ====="
+
+          "$APKSIGNER" verify \
+            --verbose \
+            --print-certs \
             app/build/outputs/apk/debug/app-debug.apk
 
       - name: Guardar APK de prueba
