@@ -26,46 +26,37 @@ steps:
       distribution: temurin
       java-version: '17'
 
-  - name: Comprobar archivos necesarios
+  - name: Comprobar archivos
     shell: bash
     run: |
       set -e
-      test -f "PliegaPro.html"
-      test -f "PliegaPro_logo.png"
-      test -f "PliegaPro.apk"
-      echo "Archivos comprobados correctamente."
+      test -f PliegaPro.html
+      test -f PliegaPro_logo.png
+      test -f PliegaPro.apk
+      echo "Archivos correctos."
 
   - name: Preparar herramientas Android
+    uses: android-actions/setup-android@v3
+
+  - name: Instalar herramientas de compilación
     shell: bash
     run: |
       set -e
-      SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -n 1)"
-      if [ -z "$SDKMANAGER" ]; then
-        echo "ERROR: No se encuentra sdkmanager."
-        exit 1
-      fi
-      yes | "$SDKMANAGER" --licenses || true
-      "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
-      echo "Herramientas Android preparadas."
+      sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      yes | sdkmanager --licenses || true
 
-  - name: Comprobar firma de la APK original
+  - name: Comprobar APK original
     shell: bash
     run: |
       set -e
-      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
-        --verbose --print-certs PliegaPro.apk
+      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs PliegaPro.apk
 
-  - name: Preparar herramienta para iconos
+  - name: Preparar iconos
     shell: bash
     run: |
       set -e
       python3 -m venv /tmp/icon-venv
       /tmp/icon-venv/bin/pip install Pillow
-
-  - name: Crear iconos Android
-    shell: bash
-    run: |
-      set -e
       mkdir -p app/src/main/res/mipmap-mdpi
       mkdir -p app/src/main/res/mipmap-hdpi
       mkdir -p app/src/main/res/mipmap-xhdpi
@@ -84,27 +75,26 @@ steps:
           "mipmap-hdpi": 72,
           "mipmap-xhdpi": 96,
           "mipmap-xxhdpi": 144,
-          "mipmap-xxxhdpi": 192,
+          "mipmap-xxxhdpi": 192
       }
 
       for folder, size in sizes.items():
-          output_dir = Path("app/src/main/res") / folder
-          output_dir.mkdir(parents=True, exist_ok=True)
+          output = Path("app/src/main/res") / folder / "ic_launcher.png"
           icon = ImageOps.fit(
               image, (size, size),
               method=Image.Resampling.LANCZOS
           )
-          icon.save(output_dir / "ic_launcher.png", format="PNG")
-          print(f"Icono creado: {folder}")
+          icon.save(output, format="PNG")
+      print("Iconos creados.")
       PY
 
-  - name: Crear estructura Android
+  - name: Crear proyecto Android
     shell: bash
     run: |
       set -e
       mkdir -p app/src/main/assets
       mkdir -p app/src/main/java/com/pliegapro/app
-      cp "PliegaPro.html" app/src/main/assets/index.html
+      cp PliegaPro.html app/src/main/assets/index.html
 
       cat > settings.gradle <<'GRADLE'
       pluginManagement {
@@ -180,7 +170,6 @@ steps:
               android:roundIcon="@mipmap/ic_launcher"
               android:usesCleartextTraffic="true"
               android:theme="@android:style/Theme.Material.NoActionBar">
-
               <activity
                   android:name=".MainActivity"
                   android:configChanges="orientation|screenSize|keyboardHidden"
@@ -259,9 +248,7 @@ steps:
                   Uri[] results = null;
                   if (resultCode == Activity.RESULT_OK && data != null) {
                       Uri uri = data.getData();
-                      if (uri != null) {
-                          results = new Uri[]{uri};
-                      }
+                      if (uri != null) results = new Uri[]{uri};
                   }
                   fileCallback.onReceiveValue(results);
                   fileCallback = null;
@@ -283,9 +270,7 @@ steps:
     shell: bash
     run: |
       set -e
-      curl -fsSL \
-        https://services.gradle.org/distributions/gradle-8.9-bin.zip \
-        -o /tmp/gradle.zip
+      curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
       unzip -q /tmp/gradle.zip -d /tmp
       echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
@@ -318,23 +303,21 @@ steps:
       set -euo pipefail
       gradle --no-daemon assembleRelease
 
-  - name: Comprobar firma de la APK nueva
+  - name: Verificar firma final
     shell: bash
     run: |
       set -e
-      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
-        --verbose --print-certs \
-        app/build/outputs/apk/release/app-release.apk
+      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/release/app-release.apk
 
-  - name: Guardar APK firmada
+  - name: Publicar APK
     uses: actions/upload-artifact@v4
     with:
       name: PliegaPro-APK-Firmada
       path: app/build/outputs/apk/release/app-release.apk
       if-no-files-found: error
 
-  - name: Limpiar archivo de firma temporal
+  - name: Limpiar firma temporal
     if: always()
     shell: bash
     run: |
-      rm -f "$RUNNER_TEMP/pliegapro-release.jks"de 
+      rm -f "$RUNNER_TEMP/pliegapro-release.jks"
