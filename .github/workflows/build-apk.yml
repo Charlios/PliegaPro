@@ -1,371 +1,340 @@
-
-name: Comprobar firma y compilar PliegaPro APK
+name: Compilar PliegaPro APK firmada
 
 on:
-  workflow_dispatch:
-  push:
-    paths:
-      - 'PliegaPro.html'
-      - 'PliegaPro_logo.png'
-      - 'PliegaPro.apk'
-      - '.github/workflows/build-apk.yml'
+workflow_dispatch:
+push:
+paths:
+- 'PliegaPro.html'
+- 'PliegaPro_logo.png'
+- 'PliegaPro.apk'
+- '.github/workflows/build-apk.yml'
 
 permissions:
-  contents: read
+contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Descargar repositorio
-        uses: actions/checkout@v4
+steps:
+  - name: Descargar repositorio
+    uses: actions/checkout@v4
 
-      - name: Preparar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+  - name: Preparar Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: '17'
 
-      - name: Comprobar archivos necesarios
-        shell: bash
-        run: |
-          set -e
-          echo "Archivos del repositorio:"
-          ls -la
+  - name: Comprobar archivos necesarios
+    shell: bash
+    run: |
+      set -e
+      test -f "PliegaPro.html"
+      test -f "PliegaPro_logo.png"
+      test -f "PliegaPro.apk"
+      echo "Archivos comprobados correctamente."
 
-          test -f "PliegaPro.html"
-          test -f "PliegaPro_logo.png"
-          test -f "PliegaPro.apk"
+  - name: Preparar herramientas Android
+    shell: bash
+    run: |
+      set -e
+      SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -n 1)"
+      if [ -z "$SDKMANAGER" ]; then
+        echo "ERROR: No se encuentra sdkmanager."
+        exit 1
+      fi
+      yes | "$SDKMANAGER" --licenses || true
+      "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
+      echo "Herramientas Android preparadas."
 
-          echo "Los tres archivos existen."
+  - name: Comprobar firma de la APK original
+    shell: bash
+    run: |
+      set -e
+      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
+        --verbose --print-certs PliegaPro.apk
 
-      - name: Preparar herramientas Android
-        shell: bash
-        run: |
-          set -e
+  - name: Preparar herramienta para iconos
+    shell: bash
+    run: |
+      set -e
+      python3 -m venv /tmp/icon-venv
+      /tmp/icon-venv/bin/pip install Pillow
 
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "Buscando sdkmanager..."
+  - name: Crear iconos Android
+    shell: bash
+    run: |
+      set -e
+      mkdir -p app/src/main/res/mipmap-mdpi
+      mkdir -p app/src/main/res/mipmap-hdpi
+      mkdir -p app/src/main/res/mipmap-xhdpi
+      mkdir -p app/src/main/res/mipmap-xxhdpi
+      mkdir -p app/src/main/res/mipmap-xxxhdpi
 
-          SDKMANAGER="$(command -v sdkmanager || true)"
+      /tmp/icon-venv/bin/python - <<'PY'
+      from PIL import Image, ImageOps
+      from pathlib import Path
 
-          if [ -z "$SDKMANAGER" ]; then
-            for candidate in \
-              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-              "$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager" \
-              "$ANDROID_HOME/tools/bin/sdkmanager"; do
-              if [ -x "$candidate" ]; then
-                SDKMANAGER="$candidate"
-                break
-              fi
-            done
-          fi
+      with Image.open("PliegaPro_logo.png") as original:
+          image = original.convert("RGBA")
 
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: No se encuentra sdkmanager."
-            exit 1
-          fi
+      sizes = {
+          "mipmap-mdpi": 48,
+          "mipmap-hdpi": 72,
+          "mipmap-xhdpi": 96,
+          "mipmap-xxhdpi": 144,
+          "mipmap-xxxhdpi": 192,
+      }
 
-          echo "Usando: $SDKMANAGER"
+      for folder, size in sizes.items():
+          output_dir = Path("app/src/main/res") / folder
+          output_dir.mkdir(parents=True, exist_ok=True)
+          icon = ImageOps.fit(
+              image, (size, size),
+              method=Image.Resampling.LANCZOS
+          )
+          icon.save(output_dir / "ic_launcher.png", format="PNG")
+          print(f"Icono creado: {folder}")
+      PY
 
-          yes | "$SDKMANAGER" --licenses || true
+  - name: Crear estructura Android
+    shell: bash
+    run: |
+      set -e
+      mkdir -p app/src/main/assets
+      mkdir -p app/src/main/java/com/pliegapro/app
+      cp "PliegaPro.html" app/src/main/assets/index.html
 
-          "$SDKMANAGER" --install "build-tools;35.0.0"
+      cat > settings.gradle <<'GRADLE'
+      pluginManagement {
+          repositories {
+              google()
+              mavenCentral()
+              gradlePluginPortal()
+          }
+      }
+      dependencyResolutionManagement {
+          repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          repositories {
+              google()
+              mavenCentral()
+          }
+      }
+      rootProject.name = 'PliegaPro'
+      include ':app'
+      GRADLE
 
-          echo "Herramientas Android preparadas."
+      cat > build.gradle <<'GRADLE'
+      plugins {
+          id 'com.android.application' version '8.7.3' apply false
+      }
+      GRADLE
 
-      - name: Comprobar firma de la APK original
-        shell: bash
-        run: |
-          set -e
+      cat > gradle.properties <<'PROPS'
+      org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+      android.useAndroidX=true
+      PROPS
 
-          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+      cat > app/build.gradle <<'GRADLE'
+      plugins {
+          id 'com.android.application'
+      }
 
-          echo "===== APK ORIGINAL ====="
+      android {
+          namespace 'com.pliegapro.app'
+          compileSdk 35
 
-          "$APKSIGNER" verify \
-            --verbose \
-            --print-certs \
-            PliegaPro.apk
-
-      - name: Preparar herramienta para iconos
-        shell: bash
-        run: |
-          set -e
-          python3 -m venv /tmp/icon-venv
-          /tmp/icon-venv/bin/pip install Pillow
-
-      - name: Crear iconos Android
-        shell: bash
-        run: |
-          set -e
-
-          mkdir -p app/src/main/res/mipmap-mdpi
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
-
-          /tmp/icon-venv/bin/python - <<'PY'
-          from PIL import Image, ImageOps
-          from pathlib import Path
-
-          source = Path("PliegaPro_logo.png")
-
-          with Image.open(source) as original:
-              image = original.convert("RGBA")
-
-          sizes = {
-              "mipmap-mdpi": 48,
-              "mipmap-hdpi": 72,
-              "mipmap-xhdpi": 96,
-              "mipmap-xxhdpi": 144,
-              "mipmap-xxxhdpi": 192,
+          defaultConfig {
+              applicationId 'com.pliegapro.app'
+              minSdk 23
+              targetSdk 28
+              versionCode 3
+              versionName '1.2'
           }
 
-          for folder, size in sizes.items():
-              output_dir = Path("app/src/main/res") / folder
-              output_dir.mkdir(parents=True, exist_ok=True)
-
-              icon = ImageOps.fit(
-                  image,
-                  (size, size),
-                  method=Image.Resampling.LANCZOS
-              )
-
-              icon.save(
-                  output_dir / "ic_launcher.png",
-                  format="PNG"
-              )
-
-              print(f"Icono creado: {folder}")
-
-          print("Iconos generados correctamente.")
-          PY
-
-      - name: Crear estructura Android
-        shell: bash
-        run: |
-          set -e
-
-          mkdir -p app/src/main/assets
-          mkdir -p app/src/main/java/com/pliegapro/app
-
-          cp "PliegaPro.html" app/src/main/assets/index.html
-
-          cat > settings.gradle <<'GRADLE'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
+          signingConfigs {
+              release {
+                  storeFile file(System.getenv("SIGNING_KEYSTORE_PATH"))
+                  storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                  keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                  keyPassword System.getenv("SIGNING_KEY_PASSWORD")
               }
           }
 
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
+          buildTypes {
+              release {
+                  signingConfig signingConfigs.release
+                  minifyEnabled false
               }
           }
+      }
+      GRADLE
 
-          rootProject.name = 'PliegaPro'
-          include ':app'
-          GRADLE
+      cat > app/src/main/AndroidManifest.xml <<'XML'
+      <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <application
+              android:allowBackup="true"
+              android:label="PliegaPro"
+              android:icon="@mipmap/ic_launcher"
+              android:roundIcon="@mipmap/ic_launcher"
+              android:usesCleartextTraffic="true"
+              android:theme="@android:style/Theme.Material.NoActionBar">
 
-          cat > build.gradle <<'GRADLE'
-          plugins {
-              id 'com.android.application' version '8.7.3' apply false
-          }
-          GRADLE
+              <activity
+                  android:name=".MainActivity"
+                  android:configChanges="orientation|screenSize|keyboardHidden"
+                  android:exported="true">
+                  <intent-filter>
+                      <action android:name="android.intent.action.MAIN" />
+                      <category android:name="android.intent.category.LAUNCHER" />
+                  </intent-filter>
+              </activity>
+          </application>
+      </manifest>
+      XML
 
-          cat > gradle.properties <<'PROPS'
-          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-          android.useAndroidX=true
-          PROPS
+      cat > app/src/main/java/com/pliegapro/app/MainActivity.java <<'JAVA'
+      package com.pliegapro.app;
 
-          cat > app/build.gradle <<'GRADLE'
-          plugins {
-              id 'com.android.application'
-          }
+      import android.app.Activity;
+      import android.content.Intent;
+      import android.net.Uri;
+      import android.os.Bundle;
+      import android.webkit.ValueCallback;
+      import android.webkit.WebChromeClient;
+      import android.webkit.WebSettings;
+      import android.webkit.WebView;
+      import android.webkit.WebViewClient;
 
-          android {
-              namespace 'com.pliegapro.app'
-              compileSdk 35
+      public class MainActivity extends Activity {
+          private WebView webView;
+          private ValueCallback<Uri[]> fileCallback;
+          private static final int FILE_CHOOSER_REQUEST = 101;
 
-              defaultConfig {
-                  applicationId 'com.pliegapro.app'
-                  minSdk 23
-                  targetSdk 28
-                  versionCode 2
-                  versionName '1.1'
-              }
-          }
-          GRADLE
+          @Override
+          protected void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              webView = new WebView(this);
+              setContentView(webView);
 
-          cat > app/src/main/AndroidManifest.xml <<'XML'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application
-                  android:allowBackup="true"
-                  android:label="PliegaPro"
-                  android:icon="@mipmap/ic_launcher"
-                  android:roundIcon="@mipmap/ic_launcher"
-                  android:usesCleartextTraffic="true"
-                  android:theme="@android:style/Theme.Material.NoActionBar">
+              WebSettings settings = webView.getSettings();
+              settings.setJavaScriptEnabled(true);
+              settings.setDomStorageEnabled(true);
+              settings.setAllowFileAccess(true);
+              settings.setAllowContentAccess(true);
 
-                  <activity
-                      android:name=".MainActivity"
-                      android:configChanges="orientation|screenSize|keyboardHidden"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-
-                  </activity>
-              </application>
-          </manifest>
-          XML
-
-          cat > app/src/main/java/com/pliegapro/app/MainActivity.java <<'JAVA'
-          package com.pliegapro.app;
-
-          import android.app.Activity;
-          import android.content.Intent;
-          import android.net.Uri;
-          import android.os.Bundle;
-          import android.webkit.ValueCallback;
-          import android.webkit.WebChromeClient;
-          import android.webkit.WebSettings;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-
-          public class MainActivity extends Activity {
-              private WebView webView;
-              private ValueCallback<Uri[]> fileCallback;
-              private static final int FILE_CHOOSER_REQUEST = 101;
-
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  webView = new WebView(this);
-                  setContentView(webView);
-
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-                  settings.setAllowFileAccess(true);
-                  settings.setAllowContentAccess(true);
-
-                  webView.setWebViewClient(new WebViewClient());
-
-                  webView.setWebChromeClient(new WebChromeClient() {
-                      @Override
-                      public boolean onShowFileChooser(
-                              WebView view,
-                              ValueCallback<Uri[]> callback,
-                              FileChooserParams params) {
-
-                          if (fileCallback != null) {
-                              fileCallback.onReceiveValue(null);
-                          }
-
-                          fileCallback = callback;
-
-                          try {
-                              startActivityForResult(
-                                  params.createIntent(),
-                                  FILE_CHOOSER_REQUEST
-                              );
-                          } catch (Exception e) {
-                              fileCallback = null;
-                              return false;
-                          }
-
-                          return true;
+              webView.setWebViewClient(new WebViewClient());
+              webView.setWebChromeClient(new WebChromeClient() {
+                  @Override
+                  public boolean onShowFileChooser(
+                          WebView view,
+                          ValueCallback<Uri[]> callback,
+                          FileChooserParams params) {
+                      if (fileCallback != null) {
+                          fileCallback.onReceiveValue(null);
                       }
-                  });
-
-                  webView.loadUrl("file:///android_asset/index.html");
-              }
-
-              @Override
-              protected void onActivityResult(
-                      int requestCode,
-                      int resultCode,
-                      Intent data) {
-
-                  super.onActivityResult(requestCode, resultCode, data);
-
-                  if (requestCode == FILE_CHOOSER_REQUEST
-                          && fileCallback != null) {
-
-                      Uri[] results = null;
-
-                      if (resultCode == Activity.RESULT_OK && data != null) {
-                          Uri uri = data.getData();
-
-                          if (uri != null) {
-                              results = new Uri[]{uri};
-                          }
+                      fileCallback = callback;
+                      try {
+                          startActivityForResult(
+                              params.createIntent(),
+                              FILE_CHOOSER_REQUEST
+                          );
+                      } catch (Exception e) {
+                          fileCallback = null;
+                          return false;
                       }
-
-                      fileCallback.onReceiveValue(results);
-                      fileCallback = null;
+                      return true;
                   }
-              }
+              });
+              webView.loadUrl("file:///android_asset/index.html");
+          }
 
-              @Override
-              public void onBackPressed() {
-                  if (webView != null && webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
+          @Override
+          protected void onActivityResult(
+                  int requestCode, int resultCode, Intent data) {
+              super.onActivityResult(requestCode, resultCode, data);
+              if (requestCode == FILE_CHOOSER_REQUEST
+                      && fileCallback != null) {
+                  Uri[] results = null;
+                  if (resultCode == Activity.RESULT_OK && data != null) {
+                      Uri uri = data.getData();
+                      if (uri != null) {
+                          results = new Uri[]{uri};
+                      }
                   }
+                  fileCallback.onReceiveValue(results);
+                  fileCallback = null;
               }
           }
-          JAVA
 
-      - name: Instalar Gradle
-        shell: bash
-        run: |
-          set -e
+          @Override
+          public void onBackPressed() {
+              if (webView != null && webView.canGoBack()) {
+                  webView.goBack();
+              } else {
+                  super.onBackPressed();
+              }
+          }
+      }
+      JAVA
 
-          curl -fsSL \
-            https://services.gradle.org/distributions/gradle-8.9-bin.zip \
-            -o /tmp/gradle.zip
+  - name: Instalar Gradle
+    shell: bash
+    run: |
+      set -e
+      curl -fsSL \
+        https://services.gradle.org/distributions/gradle-8.9-bin.zip \
+        -o /tmp/gradle.zip
+      unzip -q /tmp/gradle.zip -d /tmp
+      echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-          unzip -q /tmp/gradle.zip -d /tmp
+  - name: Preparar firma permanente
+    shell: bash
+    env:
+      SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+      SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/pliegapro-release.jks
+    run: |
+      set -euo pipefail
+      test -n "$SIGNING_KEYSTORE_BASE64"
+      test -n "$SIGNING_STORE_PASSWORD"
+      test -n "$SIGNING_KEY_PASSWORD"
+      test -n "$SIGNING_KEY_ALIAS"
+      printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$SIGNING_KEYSTORE_PATH"
+      chmod 600 "$SIGNING_KEYSTORE_PATH"
+      echo "Firma permanente preparada."
 
-          echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
+  - name: Compilar APK firmada
+    shell: bash
+    env:
+      SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/pliegapro-release.jks
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+    run: |
+      set -euo pipefail
+      gradle --no-daemon assembleRelease
 
-      - name: Compilar APK de prueba
-        shell: bash
-        run: |
-          set -e
-          gradle --no-daemon assembleDebug
+  - name: Comprobar firma de la APK nueva
+    shell: bash
+    run: |
+      set -e
+      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify \
+        --verbose --print-certs \
+        app/build/outputs/apk/release/app-release.apk
 
-      - name: Comprobar firma de la APK nueva
-        shell: bash
-        run: |
-          set -e
+  - name: Guardar APK firmada
+    uses: actions/upload-artifact@v4
+    with:
+      name: PliegaPro-APK-Firmada
+      path: app/build/outputs/apk/release/app-release.apk
+      if-no-files-found: error
 
-          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
-
-          echo "===== APK NUEVA ====="
-
-          "$APKSIGNER" verify \
-            --verbose \
-            --print-certs \
-            app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Guardar APK de prueba
-        uses: actions/upload-artifact@v4
-        with:
-          name: PliegaPro-APK-Prueba
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+  - name: Limpiar archivo de firma temporal
+    if: always()
+    shell: bash
+    run: |
+      rm -f "$RUNNER_TEMP/pliegapro-release.jks"
