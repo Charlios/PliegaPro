@@ -27,14 +27,27 @@ jobs:
           java-version: '17'
 
       - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Instalar componentes Android
         shell: bash
         run: |
           set -e
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
+
+          test -n "$ANDROID_HOME"
+
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager 2>/dev/null | head -n 1)"
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: No se encuentra sdkmanager."
+            exit 1
+          fi
+
+          echo "Usando: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" --licenses || true
+
+          "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
@@ -43,23 +56,23 @@ jobs:
         shell: bash
         run: |
           set -e
+
           curl -fsSL \
             https://services.gradle.org/distributions/gradle-8.9-bin.zip \
             -o /tmp/gradle.zip
+
           unzip -q /tmp/gradle.zip -d /tmp
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Comprobar archivos necesarios
+      - name: Comprobar archivos
         shell: bash
         run: |
           set -e
-          test -f "PliegaPro.html"
-          test -f "PliegaPro_logo.png"
-          echo "HTML y logotipo encontrados."
-          echo "Tamaño del HTML:"
-          wc -c < PliegaPro.html
+          test -f PliegaPro.html
+          test -f PliegaPro_logo.png
+          echo "Archivos encontrados correctamente."
 
-      - name: Crear estructura Android
+      - name: Crear proyecto Android
         shell: bash
         run: |
           set -e
@@ -122,8 +135,7 @@ jobs:
 
               signingConfigs {
                   release {
-                      def ks = System.getenv('SIGNING_KEYSTORE_PATH')
-                      storeFile file(ks)
+                      storeFile file(System.getenv('SIGNING_KEYSTORE_PATH'))
                       storePassword System.getenv('SIGNING_STORE_PASSWORD')
                       keyAlias System.getenv('SIGNING_KEY_ALIAS')
                       keyPassword System.getenv('SIGNING_KEY_PASSWORD')
@@ -152,10 +164,12 @@ jobs:
                   android:label="PliegaPro"
                   android:theme="@style/AppTheme"
                   android:usesCleartextTraffic="false">
+
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
                       android:configChanges="orientation|screenSize|keyboardHidden">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -200,10 +214,8 @@ jobs:
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
-                  getWindow().setStatusBarColor(
-                      android.graphics.Color.rgb(5, 5, 6));
-                  getWindow().setNavigationBarColor(
-                      android.graphics.Color.rgb(5, 5, 6));
+                  getWindow().setStatusBarColor(0xFF050506);
+                  getWindow().setNavigationBarColor(0xFF050506);
 
                   webView = new WebView(this);
                   setContentView(webView);
@@ -214,7 +226,6 @@ jobs:
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
                   settings.setJavaScriptCanOpenWindowsAutomatically(true);
-                  settings.setSupportMultipleWindows(false);
 
                   webView.setWebViewClient(new WebViewClient());
 
@@ -227,25 +238,22 @@ jobs:
                           if (fileCallback != null) {
                               fileCallback.onReceiveValue(null);
                           }
+
                           fileCallback = callback;
 
-                          Intent intent = params.createIntent();
                           try {
-                              startActivityForResult(intent, FILE_REQUEST);
+                              startActivityForResult(
+                                  params.createIntent(), FILE_REQUEST);
                           } catch (Exception e) {
                               fileCallback = null;
                               return false;
                           }
+
                           return true;
                       }
                   });
 
-                  if (savedInstanceState == null) {
-                      webView.loadUrl(
-                          "file:///android_asset/index.html");
-                  } else {
-                      webView.restoreState(savedInstanceState);
-                  }
+                  webView.loadUrl("file:///android_asset/index.html");
               }
 
               @Override
@@ -255,22 +263,16 @@ jobs:
 
                   if (requestCode == FILE_REQUEST && fileCallback != null) {
                       Uri[] results = null;
+
                       if (resultCode == Activity.RESULT_OK && data != null) {
                           Uri uri = data.getData();
                           if (uri != null) {
                               results = new Uri[]{uri};
                           }
                       }
+
                       fileCallback.onReceiveValue(results);
                       fileCallback = null;
-                  }
-              }
-
-              @Override
-              protected void onSaveInstanceState(Bundle outState) {
-                  super.onSaveInstanceState(outState);
-                  if (webView != null) {
-                      webView.saveState(outState);
                   }
               }
 
@@ -289,15 +291,17 @@ jobs:
                       fileCallback.onReceiveValue(null);
                       fileCallback = null;
                   }
+
                   if (webView != null) {
                       webView.destroy();
                   }
+
                   super.onDestroy();
               }
           }
           EOF
 
-      - name: Preparar clave de firma permanente
+      - name: Preparar firma permanente
         shell: bash
         env:
           SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
@@ -312,19 +316,19 @@ jobs:
           test -n "$SIGNING_KEY_PASSWORD"
           test -n "$SIGNING_KEY_ALIAS"
 
-          export SIGNING_KEYSTORE_PATH="$RUNNER_TEMP/pliegapro-release.jks"
+          KEYSTORE="$RUNNER_TEMP/pliegapro-release.jks"
 
           printf '%s' "$SIGNING_KEYSTORE_BASE64" \
-            | base64 --decode > "$SIGNING_KEYSTORE_PATH"
+            | base64 --decode > "$KEYSTORE"
 
-          test -s "$SIGNING_KEYSTORE_PATH"
+          test -s "$KEYSTORE"
 
           keytool -list \
-            -keystore "$SIGNING_KEYSTORE_PATH" \
+            -keystore "$KEYSTORE" \
             -storepass "$SIGNING_STORE_PASSWORD" \
             -alias "$SIGNING_KEY_ALIAS"
 
-          echo "SIGNING_KEYSTORE_PATH=$SIGNING_KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo "SIGNING_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
 
       - name: Compilar APK firmada
         shell: bash
@@ -336,20 +340,20 @@ jobs:
           set -e
           gradle --no-daemon clean assembleRelease
 
-      - name: Verificar firma de la APK
+      - name: Verificar firma
         shell: bash
         run: |
           set -e
 
           APK="app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+
           test -s "$APK"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
 
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
-            verify --verbose --print-certs "$APK"
+          echo "APK generada y firma verificada."
 
-          echo "APK firmada correctamente."
-
-      - name: Guardar APK para descargar
+      - name: Publicar APK para descargar
         uses: actions/upload-artifact@v4
         with:
           name: PliegaPro-APK-Firmada
