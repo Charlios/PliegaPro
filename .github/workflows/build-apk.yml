@@ -1,4 +1,5 @@
-name: Compilar PliegaPro APK
+
+name: Comprobar firma y compilar PliegaPro APK
 
 on:
   workflow_dispatch:
@@ -6,6 +7,7 @@ on:
     paths:
       - 'PliegaPro.html'
       - 'PliegaPro_logo.png'
+      - 'PliegaPro.apk'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -33,8 +35,22 @@ jobs:
 
           test -f "PliegaPro.html"
           test -f "PliegaPro_logo.png"
+          test -f "PliegaPro.apk"
 
-          echo "HTML y logotipo encontrados correctamente."
+          echo "Archivos encontrados correctamente."
+
+      - name: Preparar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar herramientas de firma
+        run: sdkmanager "build-tools;35.0.0"
+
+      - name: Comprobar firma de la APK original
+        shell: bash
+        run: |
+          echo "===== FIRMA DE LA APK ORIGINAL ====="
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify --verbose --print-certs PliegaPro.apk
 
       - name: Preparar herramienta para iconos
         shell: bash
@@ -57,11 +73,6 @@ jobs:
 
           source = Path("PliegaPro_logo.png")
 
-          if not source.is_file():
-              raise SystemExit(
-                  "ERROR: No se encuentra PliegaPro_logo.png"
-              )
-
           with Image.open(source) as original:
               image = original.convert("RGBA")
 
@@ -76,17 +87,15 @@ jobs:
           for folder, size in sizes.items():
               output_dir = Path("app/src/main/res") / folder
               output_dir.mkdir(parents=True, exist_ok=True)
-
               icon = ImageOps.fit(
                   image,
                   (size, size),
                   method=Image.Resampling.LANCZOS
               )
-
               icon.save(output_dir / "ic_launcher.png", format="PNG")
-              print(f"Icono creado: {folder}/ic_launcher.png")
+              print(f"Icono creado: {folder}")
 
-          print("Iconos Android generados correctamente.")
+          print("Iconos generados correctamente.")
           PY
 
       - name: Crear estructura Android
@@ -142,15 +151,14 @@ jobs:
                   applicationId 'com.pliegapro.app'
                   minSdk 23
                   targetSdk 28
-                  versionCode 1
-                  versionName '1.0'
+                  versionCode 2
+                  versionName '1.1'
               }
           }
           GRADLE
 
           cat > app/src/main/AndroidManifest.xml <<'XML'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
               <application
                   android:allowBackup="true"
                   android:label="PliegaPro"
@@ -213,7 +221,6 @@ jobs:
                               WebView view,
                               ValueCallback<Uri[]> callback,
                               FileChooserParams params) {
-
                           if (fileCallback != null) {
                               fileCallback.onReceiveValue(null);
                           }
@@ -242,17 +249,14 @@ jobs:
                       int requestCode,
                       int resultCode,
                       Intent data) {
-
                   super.onActivityResult(requestCode, resultCode, data);
 
                   if (requestCode == FILE_CHOOSER_REQUEST
                           && fileCallback != null) {
-
                       Uri[] results = null;
 
                       if (resultCode == Activity.RESULT_OK && data != null) {
                           Uri uri = data.getData();
-
                           if (uri != null) {
                               results = new Uri[]{uri};
                           }
@@ -280,17 +284,23 @@ jobs:
           curl -fsSL \
             https://services.gradle.org/distributions/gradle-8.9-bin.zip \
             -o /tmp/gradle.zip
-
           unzip -q /tmp/gradle.zip -d /tmp
-
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
-      - name: Compilar APK
+      - name: Compilar APK de prueba
         run: gradle --no-daemon assembleDebug
 
-      - name: Guardar APK para descargar
+      - name: Comprobar firma de la nueva APK
+        shell: bash
+        run: |
+          echo "===== FIRMA DE LA NUEVA APK ====="
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify --verbose --print-certs \
+            app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Guardar APK de prueba
         uses: actions/upload-artifact@v4
         with:
-          name: PliegaPro-APK
+          name: PliegaPro-APK-Prueba
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
