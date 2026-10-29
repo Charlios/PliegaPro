@@ -26,21 +26,41 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Instalar componentes Android
+      - name: Preparar Android SDK sin setup-android
         shell: bash
         run: |
           set -e
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME"
+
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager 2>/dev/null | head -n 1)"
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: No se encuentra sdkmanager."
+            exit 1
+          fi
+
+          echo "SDKMANAGER encontrado: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" --licenses || true
+
+          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Instalar Gradle
         shell: bash
         run: |
           set -e
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+
+          curl -fsSL \
+            https://services.gradle.org/distributions/gradle-8.9-bin.zip \
+            -o /tmp/gradle.zip
+
           unzip -q /tmp/gradle.zip -d /tmp
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
@@ -48,9 +68,19 @@ jobs:
         shell: bash
         run: |
           set -e
-          test -f PliegaPro.html
-          test -f PliegaPro_logo.png
-          echo "Archivos encontrados."
+
+          if [ ! -f "PliegaPro.html" ]; then
+            echo "ERROR: No existe PliegaPro.html en la raíz."
+            exit 1
+          fi
+
+          if [ ! -f "PliegaPro_logo.png" ]; then
+            echo "ERROR: No existe PliegaPro_logo.png en la raíz."
+            echo "Comprueba el nombre exacto del archivo del logotipo."
+            exit 1
+          fi
+
+          echo "Archivos encontrados correctamente."
 
       - name: Crear proyecto Android
         shell: bash
@@ -72,6 +102,7 @@ jobs:
                   gradlePluginPortal()
               }
           }
+
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -79,6 +110,7 @@ jobs:
                   mavenCentral()
               }
           }
+
           rootProject.name = 'PliegaPro'
           include ':app'
           EOF
@@ -131,29 +163,29 @@ jobs:
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
               }
-
-              lint {
-                  abortOnError true
-              }
           }
           EOF
 
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
               <application
                   android:allowBackup="true"
                   android:label="PliegaPro"
                   android:theme="@style/AppTheme"
                   android:usesCleartextTraffic="false">
+
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
                       android:configChanges="orientation|screenSize|keyboardHidden">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
+
                   </activity>
               </application>
           </manifest>
@@ -193,6 +225,7 @@ jobs:
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
                   getWindow().setStatusBarColor(0xFF050506);
                   getWindow().setNavigationBarColor(0xFF050506);
 
@@ -204,8 +237,10 @@ jobs:
                   settings.setDomStorageEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
+                  settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
                   webView.setWebViewClient(new WebViewClient());
+
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
                       public boolean onShowFileChooser(
@@ -215,7 +250,9 @@ jobs:
                           if (fileCallback != null) {
                               fileCallback.onReceiveValue(null);
                           }
+
                           fileCallback = callback;
+
                           try {
                               startActivityForResult(
                                   params.createIntent(), FILE_REQUEST);
@@ -223,6 +260,7 @@ jobs:
                               fileCallback = null;
                               return false;
                           }
+
                           return true;
                       }
                   });
@@ -234,12 +272,17 @@ jobs:
               protected void onActivityResult(
                       int requestCode, int resultCode, Intent data) {
                   super.onActivityResult(requestCode, resultCode, data);
+
                   if (requestCode == FILE_REQUEST && fileCallback != null) {
                       Uri[] results = null;
+
                       if (resultCode == Activity.RESULT_OK && data != null) {
                           Uri uri = data.getData();
-                          if (uri != null) results = new Uri[]{uri};
+                          if (uri != null) {
+                              results = new Uri[]{uri};
+                          }
                       }
+
                       fileCallback.onReceiveValue(results);
                       fileCallback = null;
                   }
@@ -260,7 +303,11 @@ jobs:
                       fileCallback.onReceiveValue(null);
                       fileCallback = null;
                   }
-                  if (webView != null) webView.destroy();
+
+                  if (webView != null) {
+                      webView.destroy();
+                  }
+
                   super.onDestroy();
               }
           }
@@ -275,13 +322,17 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
           set -e
+
           test -n "$SIGNING_KEYSTORE_BASE64"
           test -n "$SIGNING_STORE_PASSWORD"
           test -n "$SIGNING_KEY_PASSWORD"
           test -n "$SIGNING_KEY_ALIAS"
 
           KEYSTORE="$RUNNER_TEMP/pliegapro-release.jks"
-          printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+
+          printf '%s' "$SIGNING_KEYSTORE_BASE64" \
+            | base64 --decode > "$KEYSTORE"
+
           test -s "$KEYSTORE"
 
           keytool -list \
@@ -301,14 +352,18 @@ jobs:
           set -e
           gradle --no-daemon clean assembleRelease
 
-      - name: Verificar firma
+      - name: Verificar firma de la APK
         shell: bash
         run: |
           set -e
+
           APK="app/build/outputs/apk/release/app-release.apk"
           APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+
           test -s "$APK"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
+
+          echo "APK generada y firma verificada."
 
       - name: Publicar APK para descargar
         uses: actions/upload-artifact@v4
