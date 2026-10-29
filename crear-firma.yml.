@@ -1,0 +1,15 @@
+
+name: Preparar firma PliegaPro
+
+on:
+  workflow_dispatch:
+
+jobs:
+  preparar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar entorno
+        run: |
+          echo "Entorno preparado."
+          echo "No se ha generado ni exportado ninguna clave."
+          echo "La clave permanente se configurará en un paso posterior."
