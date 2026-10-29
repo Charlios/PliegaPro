@@ -1,4 +1,3 @@
-
 name: Compilar PliegaPro APK
 
 on:
@@ -6,6 +5,7 @@ on:
   push:
     paths:
       - 'PliegaPro.html'
+      - 'Logotipo de PleegaPro.png'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -25,17 +25,73 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Comprobar HTML
+      - name: Comprobar archivos
+        shell: bash
         run: |
           echo "Archivos en la raíz:"
           ls -la
-          test -f PliegaPro.html
+          test -f "PliegaPro.html"
+          test -f "Logotipo de PleegaPro.png"
+
+      - name: Preparar herramienta para iconos
+        shell: bash
+        run: |
+          python3 -m venv /tmp/icon-venv
+          /tmp/icon-venv/bin/pip install Pillow
+
+      - name: Crear iconos Android
+        shell: bash
+        run: |
+          mkdir -p app/src/main/res/mipmap-mdpi
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
+
+          /tmp/icon-venv/bin/python - <<'PY'
+          from PIL import Image, ImageOps
+          from pathlib import Path
+
+          source = Path("Logotipo de PleegaPro.png")
+
+          if not source.is_file():
+              raise SystemExit(
+                  "ERROR: No se encuentra Logotipo de PleegaPro.png"
+              )
+
+          image = Image.open(source).convert("RGBA")
+
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+
+          for folder, size in sizes.items():
+              output_dir = Path("app/src/main/res") / folder
+              output_dir.mkdir(parents=True, exist_ok=True)
+
+              square = ImageOps.fit(
+                  image,
+                  (size, size),
+                  method=Image.Resampling.LANCZOS
+              )
+
+              square.save(output_dir / "ic_launcher.png", "PNG")
+              print(f"Icono creado: {folder}/ic_launcher.png")
+
+          print("Todos los iconos se han generado correctamente.")
+          PY
 
       - name: Crear estructura Android
         shell: bash
         run: |
-          mkdir -p app/src/main/assets app/src/main/java/com/pliegapro/app
-          cp PliegaPro.html app/src/main/assets/index.html
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/java/com/pliegapro/app
+
+          cp "PliegaPro.html" app/src/main/assets/index.html
 
           cat > settings.gradle <<'GRADLE'
           pluginManagement {
@@ -45,6 +101,7 @@ jobs:
                   gradlePluginPortal()
               }
           }
+
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -52,6 +109,7 @@ jobs:
                   mavenCentral()
               }
           }
+
           rootProject.name = 'PliegaPro'
           include ':app'
           GRADLE
@@ -88,19 +146,25 @@ jobs:
 
           cat > app/src/main/AndroidManifest.xml <<'XML'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
               <application
                   android:allowBackup="true"
                   android:label="PliegaPro"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
                   android:usesCleartextTraffic="true"
                   android:theme="@android:style/Theme.Material.NoActionBar">
+
                   <activity
                       android:name=".MainActivity"
                       android:configChanges="orientation|screenSize|keyboardHidden"
                       android:exported="true">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
+
                   </activity>
               </application>
           </manifest>
@@ -127,6 +191,7 @@ jobs:
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+
                   webView = new WebView(this);
                   setContentView(webView);
 
@@ -137,23 +202,30 @@ jobs:
                   settings.setAllowContentAccess(true);
 
                   webView.setWebViewClient(new WebViewClient());
+
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
                       public boolean onShowFileChooser(
                               WebView view,
                               ValueCallback<Uri[]> callback,
                               FileChooserParams params) {
+
                           if (fileCallback != null) {
                               fileCallback.onReceiveValue(null);
                           }
+
                           fileCallback = callback;
+
                           try {
                               startActivityForResult(
-                                  params.createIntent(), FILE_CHOOSER_REQUEST);
+                                  params.createIntent(),
+                                  FILE_CHOOSER_REQUEST
+                              );
                           } catch (Exception e) {
                               fileCallback = null;
                               return false;
                           }
+
                           return true;
                       }
                   });
@@ -163,16 +235,25 @@ jobs:
 
               @Override
               protected void onActivityResult(
-                      int requestCode, int resultCode, Intent data) {
+                      int requestCode,
+                      int resultCode,
+                      Intent data) {
+
                   super.onActivityResult(requestCode, resultCode, data);
-                  if (requestCode == FILE_CHOOSER_REQUEST && fileCallback != null) {
+
+                  if (requestCode == FILE_CHOOSER_REQUEST
+                          && fileCallback != null) {
+
                       Uri[] results = null;
+
                       if (resultCode == Activity.RESULT_OK && data != null) {
                           Uri uri = data.getData();
+
                           if (uri != null) {
                               results = new Uri[]{uri};
                           }
                       }
+
                       fileCallback.onReceiveValue(results);
                       fileCallback = null;
                   }
@@ -190,8 +271,12 @@ jobs:
           JAVA
 
       - name: Instalar Gradle
+        shell: bash
         run: |
-          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          curl -fsSL \
+            https://services.gradle.org/distributions/gradle-8.9-bin.zip \
+            -o /tmp/gradle.zip
+
           unzip -q /tmp/gradle.zip -d /tmp
           echo "/tmp/gradle-8.9/bin" >> "$GITHUB_PATH"
 
