@@ -3,80 +3,91 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101114">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#000000">
 <title>PliegaPro</title>
 <style>
-:root{
- --bg:#101114;--panel:#191b20;--panel2:#22252c;
- --red:#ff303b;--text:#f5f5f6;--muted:#9297a3;
- --line:#343740;
+:root {
+ --bg:#000000;
+ --panel:#08090c;
+ --panel2:#111318;
+ --red:#ff303b;
+ --text:#f5f5f6;
+ --muted:#9297a3;
+ --line:#252830;
 }
 *{box-sizing:border-box}
+html,body{min-height:100%;background:#000}
 body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:white;border-radius:9px;padding:10px 13px}
 button:active{transform:scale(.98)}
 .primary{background:var(--red);border-color:var(--red);font-weight:bold}
-header{padding:15px 18px;background:#17181c;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+header{padding:15px 18px;background:#050506;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
 .logo{font-size:24px;font-weight:900;letter-spacing:-1px}
 .logo span{color:var(--red)}
 .sub{font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:4px}
 .header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
-.plus{font-size:27px;width:44px;height:44px;padding:0;color:var(--red);border-color:#6a272d;background:#291a1e}
+.plus{font-size:27px;width:44px;height:44px;padding:0;color:var(--red);border-color:#6a272d;background:#18090c}
 .wrap{max-width:1250px;margin:auto;padding:16px}
 .searchbar{display:flex;gap:10px;margin-bottom:15px}
-input,select,textarea{width:100%;background:#101115;color:white;border:1px solid var(--line);border-radius:8px;padding:11px;outline:none}
+input,select,textarea{width:100%;background:#030304;color:white;border:1px solid var(--line);border-radius:8px;padding:11px;outline:none}
 input:focus,textarea:focus,select:focus{border-color:var(--red)}
 .searchbar input{font-size:16px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
 .refhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .refname{font-size:clamp(25px,5vw,38px);font-weight:900;letter-spacing:-1px;overflow-wrap:anywhere}
-.tag{font-size:11px;color:#ff858b;border:1px solid #673037;background:#29191d;border-radius:6px;padding:5px 8px}
+.tag{font-size:11px;color:#ff858b;border:1px solid #673037;background:#18090c;border-radius:6px;padding:5px 8px}
 .meta{color:var(--muted);font-size:13px;margin-top:6px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 16px}
 .actions button{flex:1}
 .layout{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch}
 .layout>.card{height:100%;padding:12px}
 .sectiontitle{font-size:12px;letter-spacing:1px;color:var(--muted);margin:0 0 13px;text-transform:uppercase;text-align:center}
-.bend{min-width:0;padding:10px;background:#131418;border:1px solid var(--line);border-radius:9px;margin-bottom:10px}
-.bendtitle{font-weight:bold;color:var(--red);font-size:12px;margin-bottom:9px;text-align:center;background:#292025;padding:8px 3px;border-radius:6px}
+.bend{min-width:0;padding:10px;background:#030304;border:1px solid var(--line);border-radius:9px;margin-bottom:10px}
+.bendtitle{font-weight:bold;color:var(--red);font-size:12px;margin-bottom:9px;text-align:center;background:#16090c;padding:8px 3px;border-radius:6px}
 .axisrow,.globalrow{display:grid;grid-template-columns:24px minmax(0,1fr);gap:6px;align-items:center;margin-top:7px}
 .axislabel{font-weight:bold;color:var(--muted);font-size:12px}
-.axisvalue{background:#24262d;border:1px solid #343740;border-radius:6px;padding:9px 3px;text-align:center;font-weight:bold;font-size:clamp(14px,2vw,19px);font-variant-numeric:tabular-nums;overflow:hidden}
+.axisvalue{background:#101115;border:1px solid #252830;border-radius:6px;padding:9px 3px;text-align:center;font-weight:bold;font-size:clamp(14px,2vw,19px);font-variant-numeric:tabular-nums;overflow:hidden}
 .globals .axisvalue{color:#ff7279;font-size:clamp(19px,2.5vw,25px);padding:13px 3px}
 .globalrow{margin-top:12px}
 .globalrow .axislabel{font-size:14px}
 .note{color:#c7c9d0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
-.preview{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:12px auto;border-radius:8px;cursor:zoom-in}
-.plan-thumb{margin:8px 0 0;background:#191b20;border:1px solid var(--line);border-radius:9px;padding:5px;cursor:zoom-in;width:100%}
+.plan-thumb{margin:8px 0 0;background:#08090c;border:1px solid var(--line);border-radius:9px;padding:5px;cursor:zoom-in;width:100%}
 .plan-thumb-title{font-size:10px;letter-spacing:.7px;color:var(--muted);text-align:center;margin:0 0 4px}
-.plan-thumb img{display:block;width:100%;height:190px;object-fit:contain;background:#101115;border-radius:5px}
-.plan-pdf{height:190px;display:flex;align-items:center;justify-content:center;gap:12px;background:#101115;border-radius:7px;color:#ff7279;font-weight:bold}
+.plan-thumb img{display:block;width:100%;height:190px;object-fit:contain;background:#000;border-radius:5px}
+.plan-pdf{height:190px;display:flex;align-items:center;justify-content:center;gap:12px;background:#000;border-radius:7px;color:#ff7279;font-weight:bold}
 .plan-pdf span{font-size:38px}
 .plan-hint{text-align:center;font-size:10px;color:var(--muted);margin-top:3px}
-#largeImage iframe{width:100%;height:80vh;border:0;background:white;border-radius:8px}
-#imageModal .dialog{width:min(1100px,100%)}
 .empty{text-align:center;padding:40px 16px;color:var(--muted)}
 .empty .big{font-size:45px;color:var(--red)}
 footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
-.modal{position:fixed;inset:0;background:#000b;z-index:10;display:none;align-items:center;justify-content:center;padding:12px}
+.modal{position:fixed;inset:0;background:#000f;z-index:10;display:none;align-items:center;justify-content:center;padding:8px}
 .modal.show{display:flex}
-.dialog{width:min(600px,100%);max-height:92vh;overflow:auto;background:#191b20;border:1px solid #42454e;border-radius:15px;padding:18px}
+.dialog{width:min(600px,100%);max-height:92vh;overflow:auto;background:#08090c;border:1px solid #30333b;border-radius:15px;padding:18px}
 .dialog h2{margin:0 0 16px;font-size:21px}
 .field{margin:12px 0}
 .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .editcolumns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.editbend{background:#111216;border:1px solid var(--line);border-radius:9px;padding:10px;margin:8px 0}
+.editbend{background:#030304;border:1px solid var(--line);border-radius:9px;padding:10px;margin:8px 0}
 .editbend h3{font-size:12px;color:var(--red);margin:0 0 8px}
 .editaxis{display:grid;grid-template-columns:24px 1fr;gap:6px;align-items:center;margin:7px 0}
 .editaxis input{padding:10px 4px;text-align:center;font-variant-numeric:tabular-nums}
 .modalbuttons{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 .modalbuttons button{flex:1}
 .small{font-size:12px;color:var(--muted)}
-.filelabel{display:block;background:#22252c;padding:11px;border-radius:8px;border:1px dashed #555;text-align:center;cursor:pointer}
+.filelabel{display:block;background:#111318;padding:11px;border-radius:8px;border:1px dashed #555;text-align:center;cursor:pointer}
 .filelabel input{display:none}
+.backup-actions{display:flex;gap:8px;margin:8px 0 0}
+.backup-actions button{flex:1}
+.image-dialog{width:min(1200px,100%);height:94vh;max-height:94vh;display:flex;flex-direction:column;padding:8px}
+.image-tools{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.image-tools button{padding:8px 10px;font-size:13px}
+#largeImage{width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;border-radius:8px;touch-action:none}
+#largeImage img{display:block;max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;user-select:none;-webkit-user-drag:none;touch-action:none}
+#largeImage iframe{width:100%;height:100%;border:0;background:white;border-radius:8px}
+.image-help{text-align:center;margin-top:6px}
 @media(max-width:600px){
  .wrap{padding:10px}
  header{padding:12px}
@@ -92,12 +103,12 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
  .globalrow{grid-template-columns:15px minmax(0,1fr);gap:3px}
  .globalrow .axislabel{font-size:11px}
  .refname{font-size:25px}
- .plan-thumb{margin-top:6px;padding:4px;border-radius:7px}
  .plan-thumb img,.plan-pdf{height:180px}
- .plan-thumb-title{margin-bottom:3px}
  .actions button{font-size:12px;padding:10px 5px}
  .editcolumns{grid-template-columns:1fr 1fr;gap:6px}
  .formgrid{grid-template-columns:1fr}
+ .image-dialog{padding:6px}
+ .image-tools button{padding:7px;font-size:12px}
 }
 </style>
 </head>
@@ -108,7 +119,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
   <div class="sub">GESTIÓN DE PLEGADORA · DNC 60</div>
  </div>
  <div class="header-right">
-  <button title="Exportar copia" onclick="exportData()">↧</button>
+  <button title="Guardar copia de seguridad" onclick="exportData()">↧ Copia</button>
   <button class="plus" title="Añadir referencia" onclick="openForm()">＋</button>
  </div>
 </header>
@@ -117,6 +128,11 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
  <div class="searchbar">
   <input id="search" placeholder="⌕ Buscar referencia o programa..." oninput="render()">
  </div>
+ <div class="backup-actions">
+  <button onclick="exportData()">⬇ Guardar copia</button>
+  <button onclick="importBackup()">⬆ Restaurar copia</button>
+ </div>
+ <p class="small">La copia incluye referencias, correcciones, observaciones y planos adjuntos.</p>
  <main id="main"></main>
 </div>
 <footer>PLIEGAPRO · DATOS GUARDADOS EN ESTE DISPOSITIVO</footer>
@@ -196,10 +212,19 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
  </div>
 </div>
 
-<div class="modal" id="imageModal" onclick="closeModal('imageModal')">
- <div class="dialog" style="text-align:center">
-  <button onclick="closeModal('imageModal')">Cerrar ✕</button>
+<div class="modal" id="imageModal">
+ <div class="dialog image-dialog">
+  <h2 id="imageTitle">Plano ampliado</h2>
+  <div class="image-tools">
+   <button onclick="zoomBy(1.25)">＋ Zoom</button>
+   <button onclick="zoomBy(0.8)">− Zoom</button>
+   <button onclick="resetZoom()">Ajustar</button>
+   <button onclick="rotateImage()">↻ Girar</button>
+   <button onclick="toggleLandscape()">↔ Horizontal</button>
+   <button onclick="closeImageModal()">Cerrar ✕</button>
+  </div>
   <div id="largeImage"></div>
+  <div class="small image-help">Pellizca con dos dedos para ampliar. Con un dedo puedes mover el plano cuando está ampliado.</div>
  </div>
 </div>
 
@@ -209,6 +234,8 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
 const KEY='pliegapro_demo_v5';
 const $=id=>document.getElementById(id);
 let fileData=null,activeId=null;
+let zoom=1,rotation=0,panX=0,panY=0;
+let pointers=new Map(),pinchStart=null,panStart=null,orientationLocked=false;
 
 function newCorrections(){return {X:0,Y:0,R:0}}
 
@@ -241,8 +268,10 @@ let refs=loadRefs();
 function persist(){
  try{
   localStorage.setItem(KEY,JSON.stringify(refs));
+  return true;
  }catch(e){
-  alert('No hay espacio suficiente para guardar. Prueba con un archivo más pequeño.');
+  alert('No hay espacio suficiente para guardar. Los planos adjuntos pueden ocupar mucho. Guarda una copia y utiliza archivos más pequeños.');
+  return false;
  }
 }
 
@@ -288,8 +317,7 @@ function render(){
     <b>${refs.length?'No se encontraron referencias':'Todavía no hay referencias'}</b>
     <p>Pulsa el + de la parte superior para añadir una referencia.</p>
     <button onclick="importBackup()">Importar copia</button>
-   </div>
-  `;
+   </div>`;
   return;
  }
 
@@ -316,20 +344,17 @@ function render(){
     ${bendDisplay(r.bends[0],0)}
     ${r.folds>=4?bendDisplay(r.bends[2],2):''}
    </section>
-
    <section class="card">
     ${bendDisplay(r.bends[1],1)}
     ${r.folds>=4?bendDisplay(r.bends[3],3):''}
    </section>
-
    <section class="card globals">
     <h2 class="sectiontitle">GLOBALES</h2>
     ${['Y','X','R'].map(k=>`
      <div class="globalrow">
       <div class="axislabel">${k}</div>
       <div class="axisvalue">${esc(fmt(r.global[k]))}</div>
-     </div>
-    `).join('')}
+     </div>`).join('')}
    </section>
   </div>
 
@@ -337,22 +362,21 @@ function render(){
    <div class="plan-thumb" role="button" tabindex="0" onclick="showImage('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showImage('${r.id}')}">
     <div class="plan-thumb-title">PLANO · TOCA PARA AMPLIAR</div>
     <img src="${r.fileData}" alt="Miniatura del plano">
-    <div class="plan-hint">Pulsa para verlo a pantalla completa</div>
+    <div class="plan-hint">Pulsa para ampliar, usar zoom o girar</div>
    </div>`:''}
+
   ${r.fileData&&r.fileData.startsWith('data:application/pdf')?`
    <div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}">
     <div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div>
-    <div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div>
-    <div class="plan-hint">Pulsa para verlo a pantalla completa</div>
+    <div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Abrir documento</small></div></div>
+    <div class="plan-hint">Pulsa para abrir el PDF</div>
    </div>`:''}
 
   <div class="card" style="margin-top:12px">
    <h2 class="sectiontitle">PLANO Y OBSERVACIONES</h2>
    ${r.notes?`<div class="note">${esc(r.notes)}</div>`:'<div class="small">Sin observaciones.</div>'}
    ${r.fileName?`<div class="small" style="margin-top:8px">Archivo: ${esc(r.fileName)}</div>`:''}
-  </div>
-
- `;
+  </div>`;
 }
 
 function openModal(id){$(id).classList.add('show')}
@@ -375,25 +399,26 @@ function openForm(id){
 $('fileInput').addEventListener('change',async e=>{
  const f=e.target.files[0];
  if(!f)return;
-
  if(f.size>3*1024*1024){
-  alert('El archivo debe ocupar menos de 3 MB.');
+  alert('El archivo debe ocupar menos de 3 MB para evitar llenar el almacenamiento.');
   e.target.value='';
   return;
  }
-
- fileData=await new Promise((resolve,reject)=>{
-  const reader=new FileReader();
-  reader.onload=()=>resolve(reader.result);
-  reader.onerror=reject;
-  reader.readAsDataURL(f);
- });
- $('fileStatus').textContent='Seleccionado: '+f.name;
+ try{
+  fileData=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(reader.result);
+   reader.onerror=reject;
+   reader.readAsDataURL(f);
+  });
+  $('fileStatus').textContent='Seleccionado: '+f.name;
+ }catch(err){
+  alert('No se ha podido leer el archivo.');
+ }
 });
 
 $('refForm').addEventListener('submit',e=>{
  e.preventDefault();
-
  const id=$('editId').value;
  let r=refs.find(x=>x.id===id);
 
@@ -426,8 +451,7 @@ function axesEditor(prefix,obj){
     id="${prefix}_${k}" value="${fmt(obj[k])}"
     onfocus="if(this.value==='0.00')this.value=''"
     onblur="if(this.value.trim()==='')this.value='0.00'">
-  </div>
- `).join('');
+  </div>`).join('');
 }
 
 function readAxes(prefix){
@@ -442,30 +466,21 @@ function readAxes(prefix){
 function openCorrections(id){
  const r=refs.find(x=>x.id===id);
  if(!r)return;
-
  activeId=id;
-
  for(let i=0;i<4;i++){
   $('editB'+i).innerHTML=axesEditor('b'+i,r.bends[i]);
  }
-
  $('editGlobal').innerHTML=axesEditor('g',r.global);
  $('editB2Box').style.display=r.folds>=4?'block':'none';
  $('editB3Box').style.display=r.folds>=4?'block':'none';
-
  openModal('corModal');
 }
 
 $('corForm').addEventListener('submit',e=>{
  e.preventDefault();
-
  const r=refs.find(x=>x.id===activeId);
  if(!r)return;
-
- for(let i=0;i<4;i++){
-  r.bends[i]=readAxes('b'+i);
- }
-
+ for(let i=0;i<4;i++)r.bends[i]=readAxes('b'+i);
  r.global=readAxes('g');
  persist();
  closeModal('corModal');
@@ -475,42 +490,163 @@ $('corForm').addEventListener('submit',e=>{
 function deleteRef(id){
  const r=refs.find(x=>x.id===id);
  if(!r)return;
-
  if(!confirm('¿Eliminar la referencia '+r.ref+'?'))return;
-
  refs=refs.filter(x=>x.id!==id);
  activeId=null;
  persist();
  render();
 }
 
+/* Visor de planos con zoom, desplazamiento y giro */
 function showImage(id){
  const r=refs.find(x=>x.id===id);
  if(!r?.fileData)return;
-
- $('largeImage').innerHTML=`
-  <img src="${r.fileData}" style="max-width:100%;max-height:75vh;object-fit:contain">
- `;
+ $('imageTitle').textContent='Plano: '+r.ref;
+ zoom=1;rotation=0;panX=0;panY=0;
+ pointers.clear();
+ $('largeImage').innerHTML=`<img id="zoomImage" src="${r.fileData}" alt="Plano ampliado">`;
+ setupImageGestures();
  openModal('imageModal');
 }
 
 function showPDF(id){
  const r=refs.find(x=>x.id===id);
  if(!r?.fileData)return;
- $('largeImage').innerHTML=`
-  <iframe title="Plano PDF ampliado" src="${r.fileData}"></iframe>
- `;
+ $('imageTitle').textContent='Plano PDF: '+r.ref;
+ $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${r.fileData}"></iframe>`;
+ $('largeImage').style.touchAction='auto';
  openModal('imageModal');
 }
 
+function applyImageTransform(){
+ const img=$('zoomImage');
+ if(img)img.style.transform=`translate(${panX}px,${panY}px) rotate(${rotation}deg) scale(${zoom})`;
+}
+
+function zoomBy(factor){
+ zoom=Math.max(1,Math.min(6,zoom*factor));
+ if(zoom===1){panX=0;panY=0;}
+ applyImageTransform();
+}
+
+function resetZoom(){
+ zoom=1;rotation=0;panX=0;panY=0;
+ applyImageTransform();
+}
+
+function rotateImage(){
+ rotation=(rotation+90)%360;
+ applyImageTransform();
+}
+
+function setupImageGestures(){
+ const area=$('largeImage');
+ area.style.touchAction='none';
+
+ area.onpointerdown=e=>{
+  if(!$('zoomImage'))return;
+  e.preventDefault();
+  try{area.setPointerCapture(e.pointerId)}catch(err){}
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(pointers.size===1){
+   panStart={x:e.clientX,y:e.clientY,panX,panY};
+  }else if(pointers.size===2){
+   const pts=[...pointers.values()];
+   pinchStart={
+    distance:Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y),
+    zoom:zoom
+   };
+   panStart=null;
+  }
+ };
+
+ area.onpointermove=e=>{
+  if(!pointers.has(e.pointerId))return;
+  e.preventDefault();
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(pointers.size===2&&pinchStart){
+   const pts=[...pointers.values()];
+   const distance=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+   zoom=Math.max(1,Math.min(6,pinchStart.zoom*distance/Math.max(1,pinchStart.distance)));
+   if(zoom===1){panX=0;panY=0;}
+   applyImageTransform();
+  }else if(pointers.size===1&&panStart&&zoom>1){
+   panX=panStart.panX+(e.clientX-panStart.x);
+   panY=panStart.panY+(e.clientY-panStart.y);
+   applyImageTransform();
+  }
+ };
+
+ function endPointer(e){
+  pointers.delete(e.pointerId);
+  pinchStart=null;
+
+  if(pointers.size===1){
+   const p=[...pointers.values()][0];
+   panStart={x:p.x,y:p.y,panX,panY};
+  }else{
+   panStart=null;
+  }
+ }
+
+ area.onpointerup=endPointer;
+ area.onpointercancel=endPointer;
+ area.ondblclick=()=>{
+  if(zoom>1)resetZoom();
+  else zoomBy(2);
+ };
+}
+
+async function toggleLandscape(){
+ try{
+  if(screen.orientation&&screen.orientation.lock){
+   await screen.orientation.lock('landscape');
+   orientationLocked=true;
+   return;
+  }
+ }catch(err){}
+ alert('Para ver el plano en horizontal, activa la rotación automática en los ajustes rápidos de Android y gira el móvil. El bloqueo horizontal depende de la APK y del dispositivo.');
+}
+
+async function closeImageModal(){
+ closeModal('imageModal');
+ pointers.clear();
+ if(orientationLocked&&screen.orientation?.unlock){
+  try{screen.orientation.unlock()}catch(e){}
+ }
+ orientationLocked=false;
+}
+
+$('imageModal').addEventListener('click',e=>{
+ if(e.target===$('imageModal'))closeImageModal();
+});
+
+/* Copias de seguridad */
 function exportData(){
- const blob=new Blob([JSON.stringify(refs,null,2)],{type:'application/json'});
- const url=URL.createObjectURL(blob);
- const a=document.createElement('a');
- a.href=url;
- a.download='PliegaPro_copia.json';
- a.click();
- URL.revokeObjectURL(url);
+ try{
+  const backup={
+   app:'PliegaPro',
+   formatVersion:1,
+   createdAt:new Date().toISOString(),
+   references:refs
+  };
+
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='PliegaPro_copia_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+  alert('Se ha preparado la copia. Si no se descarga dentro de la APK, prueba desde Chrome. Guarda el archivo JSON en una carpeta que recuerdes.');
+ }catch(e){
+  alert('No se pudo crear la copia. Prueba desde Chrome o comprueba el espacio disponible.');
+ }
 }
 
 function importBackup(){
@@ -523,23 +659,33 @@ $('importInput').addEventListener('change',async e=>{
 
  try{
   const data=JSON.parse(await f.text());
+  const incoming=Array.isArray(data)?data:data?.references;
 
-  if(!Array.isArray(data)||!data.every(r=>r.ref&&Array.isArray(r.bends))){
-   throw Error();
+  if(!Array.isArray(incoming)||!incoming.every(r=>r&&r.ref&&Array.isArray(r.bends))){
+   throw Error('invalid');
   }
 
-  if(!confirm('La importación sustituirá las referencias actuales. ¿Continuar?'))return;
+  if(!confirm('La restauración sustituirá las referencias actuales. Guarda una copia antes para no perder datos. ¿Continuar?'))return;
 
-  refs=data;
+  refs=incoming.map(r=>({
+   ...r,
+   global:{...newCorrections(),...(r.global||{})},
+   bends:[0,1,2,3].map(i=>({...newCorrections(),...(r.bends[i]||{})})),
+   folds:Number(r.folds)===4?4:2,
+   fileData:r.fileData||null,
+   fileName:r.fileName||''
+  }));
+
   activeId=null;
-  persist();
-  render();
-  alert('Copia importada.');
+  if(persist()){
+   render();
+   alert('Copia restaurada correctamente.');
+  }
  }catch(err){
-  alert('El archivo no parece una copia válida de PliegaPro.');
+  alert('El archivo no parece una copia válida de PliegaPro. Selecciona el archivo JSON exportado desde la aplicación.');
+ }finally{
+  e.target.value='';
  }
-
- e.target.value='';
 });
 
 render();
