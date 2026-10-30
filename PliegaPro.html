@@ -161,6 +161,14 @@ const KEY='pliegapro_demo_v5';
 const $=id=>document.getElementById(id);
 let fileData=null,activeId=null,planLandscape=false;
 let refs=loadRefs();
+const planData={};
+let planDB=null;
+function openPlanDB(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window)){reject(new Error('Este dispositivo no admite almacenamiento de planos'));return}const req=indexedDB.open('PliegaProFiles',1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('plans'))db.createObjectStore('plans')};req.onsuccess=()=>{planDB=req.result;resolve(planDB)};req.onerror=()=>reject(req.error||new Error('No se pudo abrir el almacenamiento de planos'))})}
+function planStore(mode,fn){return new Promise((resolve,reject)=>{const tx=planDB.transaction('plans',mode),store=tx.objectStore('plans');let req;try{req=fn(store)}catch(e){reject(e);return}tx.oncomplete=()=>resolve(req?.result);tx.onerror=()=>reject(tx.error||new Error('Error guardando el plano'));tx.onabort=()=>reject(tx.error||new Error('Guardado cancelado'))})}
+async function savePlan(id,data){if(data){await planStore('readwrite',st=>st.put(data,id));planData[id]=data}}
+async function getPlan(id){if(planData[id])return planData[id];const value=await planStore('readonly',st=>st.get(id));if(value)planData[id]=value;return value||null}
+async function removePlan(id){await planStore('readwrite',st=>st.delete(id));delete planData[id]}
+async function initializePlans(){try{await openPlanDB();let changed=false;for(const r of refs){if(r.fileData){await savePlan(r.id,r.fileData);delete r.fileData;changed=true}else{const data=await getPlan(r.id);if(data)planData[r.id]=data}}if(changed)localStorage.setItem(KEY,JSON.stringify(refs));render()}catch(e){console.warn('Almacenamiento de planos:',e);alert('No se ha podido iniciar el almacenamiento de planos. Comprueba el espacio disponible del dispositivo.')}}
 
 function newCorrections(){return {X:0,Y:0,R:0}}
 function makeRef(ref,program,folds){
@@ -194,14 +202,14 @@ function render(){
   <section class="card">${bendDisplay(r.bends[1],1)}${r.folds>=4?bendDisplay(r.bends[3],3):''}</section>
   <section class="card globals"><h2 class="sectiontitle">GLOBALES</h2>${['Y','X','R'].map(k=>`<div class="globalrow"><div class="axislabel">${k}</div><div class="axisvalue">${esc(fmt(r.global?.[k]))}</div></div>`).join('')}</section>
  </div>
- ${r.fileData&&r.fileData.startsWith('data:image/')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showImage('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showImage('${r.id}')}"><div class="plan-thumb-title">PLANO · TOCA PARA AMPLIAR</div><img src="${r.fileData}" alt="Miniatura del plano"><div class="plan-hint">Pellizca para ampliar y arrastra para moverte</div></div>`:''}
- ${r.fileData&&r.fileData.startsWith('data:application/pdf')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}"><div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div><div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div><div class="plan-hint">Abre el PDF para verlo a pantalla completa</div></div>`:''}
+ ${planData[r.id]&&planData[r.id].startsWith('data:image/')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showImage('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showImage('${r.id}')}"><div class="plan-thumb-title">PLANO · TOCA PARA AMPLIAR</div><img src="${planData[r.id]}" alt="Miniatura del plano"><div class="plan-hint">Pellizca para ampliar y arrastra para moverte</div></div>`:''}
+ ${planData[r.id]&&planData[r.id].startsWith('data:application/pdf')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}"><div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div><div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div><div class="plan-hint">Abre el PDF para verlo a pantalla completa</div></div>`:''}
  <div class="card" style="margin-top:12px"><h2 class="sectiontitle">PLANO Y OBSERVACIONES</h2>${r.notes?`<div class="note">${esc(r.notes)}</div>`:'<div class="small">Sin observaciones.</div>'}${r.fileName?`<div class="small" style="margin-top:8px">Archivo: ${esc(r.fileName)}</div>`:''}</div>`;
 }
 function openModal(id){$(id).classList.add('show')}
 function closeModal(id){$(id).classList.remove('show');if(id==='imageModal'){endLandscape()}}
 function openForm(id){
- const r=refs.find(x=>x.id===id);$('refForm').reset();fileData=r?.fileData||null;
+ const r=refs.find(x=>x.id===id);$('refForm').reset();fileData=null;
  $('editId').value=r?.id||'';$('formTitle').textContent=r?'Editar referencia':'Nueva referencia';
  $('refInput').value=r?.ref||'';$('programInput').value=r?.program||'';$('foldsInput').value=String(r?.folds||2);
  $('notesInput').value=r?.notes||'';$('fileStatus').textContent=r?.fileName?'Archivo actual: '+r.fileName:'';
@@ -209,16 +217,15 @@ function openForm(id){
 }
 $('fileInput').addEventListener('change',async e=>{
  const f=e.target.files[0];if(!f)return;
- if(f.size>3*1024*1024){alert('El archivo debe ocupar menos de 3 MB.');e.target.value='';return}
+ if(f.size>20*1024*1024){alert('El archivo supera los 20 MB. Elige uno más pequeño.');e.target.value='';return}
  try{fileData=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(f)});$('fileStatus').textContent='Seleccionado: '+f.name}
  catch(err){alert('No se pudo leer el archivo.');}
 });
-$('refForm').addEventListener('submit',e=>{
+$('refForm').addEventListener('submit',async e=>{
  e.preventDefault();const id=$('editId').value;let r=refs.find(x=>x.id===id);
  if(!r){r=makeRef('','',Number($('foldsInput').value));refs.unshift(r)}
  r.ref=$('refInput').value.trim();r.program=$('programInput').value.trim();r.folds=Number($('foldsInput').value);r.notes=$('notesInput').value.trim();
- if(fileData!==null)r.fileData=fileData;const f=$('fileInput').files[0];if(f)r.fileName=f.name;
- activeId=r.id;if(!persist())return;closeModal('formModal');render();
+ const f=$('fileInput').files[0];try{if(fileData!==null)await savePlan(r.id,fileData);if(f)r.fileName=f.name;activeId=r.id;if(!persist())return;closeModal('formModal');render()}catch(err){alert('No se pudo guardar el plano. Comprueba el espacio disponible.');}
 });
 function axesEditor(prefix,obj){return ['Y','X','R'].map(k=>`<div class="editaxis"><div class="axislabel">${k}</div><input type="number" step="0.01" inputmode="decimal" id="${prefix}_${k}" value="${fmt(obj?.[k])}" onfocus="if(this.value==='0.00')this.value=''" onblur="if(this.value.trim()==='')this.value='0.00'"></div>`).join('')}
 function readAxes(prefix){const o={};['Y','X','R'].forEach(k=>{const v=$(prefix+'_'+k).value.trim();o[k]=v===''?0:(Number(v)||0)});return o}
@@ -232,17 +239,17 @@ $('corForm').addEventListener('submit',e=>{
  for(let i=0;i<4;i++)r.bends[i]=readAxes('b'+i);r.global=readAxes('g');
  if(!persist())return;closeModal('corModal');render();
 });
-function deleteRef(id){const r=refs.find(x=>x.id===id);if(!r)return;if(!confirm('¿Eliminar la referencia '+r.ref+'?'))return;refs=refs.filter(x=>x.id!==id);activeId=null;persist();render()}
+async function deleteRef(id){const r=refs.find(x=>x.id===id);if(!r)return;if(!confirm('¿Eliminar la referencia '+r.ref+'?'))return;refs=refs.filter(x=>x.id!==id);activeId=null;try{await removePlan(id)}catch(e){}persist();render()}
 
 /* Visor táctil de imágenes: pellizco, arrastre y doble toque. */
 let viewer={scale:1,x:0,y:0,pointers:new Map(),lastTap:0,startDistance:0,startScale:1,startX:0,startY:0,startMidX:0,startMidY:0,dragX:0,dragY:0};
 function applyPlanTransform(){const img=$('planLargeImage');if(img)img.style.transform=`translate(${viewer.x}px,${viewer.y}px) scale(${viewer.scale})`}
 function resetPlanZoom(){viewer.scale=1;viewer.x=0;viewer.y=0;applyPlanTransform()}
-function showImage(id){
- const r=refs.find(x=>x.id===id);if(!r?.fileData)return;
+async function showImage(id){
+ const r=refs.find(x=>x.id===id);if(!r)return;const imageData=await getPlan(id);if(!imageData)return;
  viewer={scale:1,x:0,y:0,pointers:new Map(),lastTap:0,startDistance:0,startScale:1,startX:0,startY:0,startMidX:0,startMidY:0,dragX:0,dragY:0};
  planLandscape=false;$('imageModal').classList.remove('landscape');
- $('largeImage').innerHTML=`<img id="planLargeImage" src="${r.fileData}" alt="Plano ampliado">`;
+ $('largeImage').innerHTML=`<img id="planLargeImage" src="${imageData}" alt="Plano ampliado">`;
  openModal('imageModal');setupTouchViewer();
 }
 function setupTouchViewer(){
@@ -288,9 +295,9 @@ function pointerUp(e){
  }
 }
 function doubleTapZoom(){if(viewer.scale>1.05){resetPlanZoom();return}viewer.scale=2.5;const stage=$('largeImage'),rect=stage.getBoundingClientRect();viewer.x=rect.width/2-(rect.width/2)*viewer.scale;viewer.y=rect.height/2-(rect.height/2)*viewer.scale;applyPlanTransform()}
-function showPDF(id){
- const r=refs.find(x=>x.id===id);if(!r?.fileData)return;planLandscape=false;$('imageModal').classList.remove('landscape');
- $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${r.fileData}"></iframe>`;openModal('imageModal');
+async function showPDF(id){
+ const r=refs.find(x=>x.id===id);if(!r)return;const pdfData=await getPlan(id);if(!pdfData)return;planLandscape=false;$('imageModal').classList.remove('landscape');
+ $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${pdfData}"></iframe>`;openModal('imageModal');
 }
 async function toggleLandscape(){
  planLandscape=!planLandscape;$('imageModal').classList.toggle('landscape',planLandscape);
@@ -300,9 +307,10 @@ async function toggleLandscape(){
 async function endLandscape(){try{if(screen.orientation?.unlock)screen.orientation.unlock();if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}planLandscape=false;$('imageModal').classList.remove('landscape')}
 
 /* Exportación JSON */
-function exportData(){
+async function exportData(){
  try{
-  const blob=new Blob([JSON.stringify(refs,null,2)],{type:'application/json'});
+  const backup=[];for(const r of refs){backup.push({...r,fileData:await getPlan(r.id)})}
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PliegaPro_copia.json';document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1500);
  }catch(e){alert('No se pudo preparar la copia de seguridad.')}
@@ -332,6 +340,7 @@ $('importInput').addEventListener('change',async e=>{
   const imported=data.map(normalizeImportedRecord);
   if(!confirm('Se van a sustituir las '+refs.length+' referencias actuales por las '+imported.length+' de la copia. ¿Continuar?'))return;
   const previous=refs;refs=imported;
+  try{for(const item of imported){if(item.fileData){await savePlan(item.id,item.fileData);delete item.fileData}}}catch(storeError){refs=previous;throw new Error('No se pudieron guardar los planos de la copia')}
   if(!persist()){refs=previous;throw new Error('No se pudieron guardar los datos importados. Los datos anteriores se han conservado.')}
   activeId=refs[0]?.id||null;render();alert('Copia importada correctamente ('+refs.length+' referencias).');
  }catch(err){alert('No se pudo importar la copia: '+(err.message||'archivo no válido')+'. Tus referencias actuales no se han sustituido.')}
@@ -339,6 +348,7 @@ $('importInput').addEventListener('change',async e=>{
 });
 
 render();
+initializePlans();
 </script>
 </body>
 </html>
