@@ -13,9 +13,9 @@ button,input,select,textarea{font:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:white;border-radius:9px;padding:10px 13px}
 button:active{transform:scale(.98)}
 .primary{background:var(--red);border-color:var(--red);font-weight:bold}
-header{padding:10px 14px;background:#080809;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;min-height:72px}
+header{padding:10px 14px;background:#080809;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:relative;z-index:5;min-height:82px;padding-top:calc(10px + env(safe-area-inset-top, 0px))}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.logo-img{display:block;width: min(190px,42vw);height:54px;object-fit:contain;object-position:left center}
+.logo-img{display:block;width:min(245px,48vw);height:68px;object-fit:contain;object-position:left center}
 .sub{font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:2px}
 .header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 .plus{font-size:27px;width:44px;height:44px;padding:0;color:var(--red);border-color:#6a272d;background:#291a1e}
@@ -51,14 +51,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--red)}
 .plan-pdf span{font-size:38px}
 .plan-hint{text-align:center;font-size:10px;color:var(--muted);margin-top:3px}
 #imageModal{padding:0;background:#000}
-#imageModal .dialog{width:100%;max-width:none;height:100%;max-height:100%;overflow:hidden;border:0;border-radius:0;padding:8px;background:#050506;display:flex;flex-direction:column}
+#imageModal .dialog{width:100%;max-width:none;height:100vh;height:100dvh;max-height:100%;overflow:hidden;border:0;border-radius:0;padding:8px;background:#050506;display:flex;flex-direction:column}
 .plan-toolbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:4px 0 8px;flex-shrink:0}
 .plan-toolbar button{padding:9px 12px}
 .large-image-stage{flex:1;min-height:0;overflow:hidden;position:relative;background:#050506;touch-action:none;display:flex;align-items:center;justify-content:center}
 .large-image-stage img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .large-image-stage iframe{width:100%;height:100%;border:0;background:white;border-radius:8px}
-#imageModal.landscape .plan-toolbar{justify-content:flex-start}
-#imageModal.landscape .large-image-stage{height:calc(100vh - 60px)}
+#imageModal .large-image-stage{height:auto;min-height:0}
+@media (orientation:landscape){#imageModal .plan-toolbar{justify-content:flex-end}#imageModal .large-image-stage{height:auto;min-height:0}}
 .empty{text-align:center;padding:40px 16px;color:var(--muted)}
 .empty .big{font-size:45px;color:var(--red)}
 footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
@@ -80,8 +80,11 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
 .filelabel{display:block;background:#22252c;padding:11px;border-radius:8px;border:1px dashed #555;text-align:center;cursor:pointer}
 .filelabel input{display:none}
 @media(max-width:600px){
- .wrap{padding:10px}header{padding:9px 10px;min-height:64px}
- .logo-img{width:min(155px,40vw);height:45px}
+ .wrap{padding:10px}header{padding:calc(8px + env(safe-area-inset-top, 0px)) 10px 9px;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:7px}
+ .brand{justify-content:center;min-height:65px}
+ .logo-img{width:min(290px,78vw);height:68px;object-position:center}
+ .header-right{width:100%;margin:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .header-right button,.import-label{min-height:36px;height:36px;padding:5px 8px;font-size:13px;border-radius:7px}
  .layout{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  .layout>.card{padding:7px}
  .sectiontitle{font-size:10px;letter-spacing:.2px;line-height:1.4}
@@ -152,7 +155,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
 </div></div>
 
 <div class="modal" id="imageModal" onclick="closeModal('imageModal')"><div class="dialog" onclick="event.stopPropagation()">
- <div class="plan-toolbar"><button onclick="toggleLandscape()">Horizontal</button><button onclick="closeModal('imageModal')">Cerrar ✕</button></div>
+ <div class="plan-toolbar"><button onclick="closeModal('imageModal')">Cerrar ✕</button></div>
  <div id="largeImage" class="large-image-stage"></div>
 </div></div>
 
@@ -206,8 +209,10 @@ function render(){
  ${planData[r.id]&&planData[r.id].startsWith('data:application/pdf')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}"><div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div><div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div><div class="plan-hint">Abre el PDF para verlo a pantalla completa</div></div>`:''}
  <div class="card" style="margin-top:12px"><h2 class="sectiontitle">PLANO Y OBSERVACIONES</h2>${r.notes?`<div class="note">${esc(r.notes)}</div>`:'<div class="small">Sin observaciones.</div>'}${r.fileName?`<div class="small" style="margin-top:8px">Archivo: ${esc(r.fileName)}</div>`:''}</div>`;
 }
-function openModal(id){$(id).classList.add('show')}
-function closeModal(id){$(id).classList.remove('show');if(id==='imageModal'){endLandscape()}}
+let imageModalHistory=false;
+function openModal(id){$(id).classList.add('show');if(id==='imageModal'&&!imageModalHistory){history.pushState({pliegaProImage:true},'','#plano');imageModalHistory=true}}
+function closeModal(id){if(id==='imageModal'&&imageModalHistory){history.back();return}$(id).classList.remove('show');if(id==='imageModal'){imageModalHistory=false;endLandscape()}}
+window.addEventListener('popstate',()=>{if($('imageModal').classList.contains('show')){$('imageModal').classList.remove('show');imageModalHistory=false;endLandscape()}});
 function openForm(id){
  const r=refs.find(x=>x.id===id);$('refForm').reset();fileData=null;
  $('editId').value=r?.id||'';$('formTitle').textContent=r?'Editar referencia':'Nueva referencia';
@@ -299,11 +304,9 @@ async function showPDF(id){
  const r=refs.find(x=>x.id===id);if(!r)return;const pdfData=await getPlan(id);if(!pdfData)return;planLandscape=false;$('imageModal').classList.remove('landscape');
  $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${pdfData}"></iframe>`;openModal('imageModal');
 }
-async function toggleLandscape(){
- planLandscape=!planLandscape;$('imageModal').classList.toggle('landscape',planLandscape);
- if(planLandscape){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();if(screen.orientation?.lock)await screen.orientation.lock('landscape')}catch(e){}}
- else endLandscape();
-}
+function updatePlanOrientation(){if(!$('imageModal').classList.contains('show'))return;const stage=$('largeImage');if(stage){stage.style.width='100%';stage.style.height='auto'}applyPlanTransform()}
+window.addEventListener('orientationchange',()=>setTimeout(updatePlanOrientation,180));
+window.addEventListener('resize',updatePlanOrientation);
 async function endLandscape(){try{if(screen.orientation?.unlock)screen.orientation.unlock();if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}planLandscape=false;$('imageModal').classList.remove('landscape')}
 
 /* Exportación JSON */
