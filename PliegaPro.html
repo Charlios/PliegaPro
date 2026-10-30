@@ -1,29 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#101114">
 <title>PliegaPro</title>
 <style>
-:root{
- --bg:#050506;--panel:#101114;--panel2:#191a1f;
- --red:#ff303b;--text:#f5f5f6;--muted:#9297a3;
- --line:#343740;
-}
+:root{--bg:#050506;--panel:#101114;--panel2:#191a1f;--red:#ff303b;--text:#f5f5f6;--muted:#9297a3;--line:#343740}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:white;border-radius:9px;padding:10px 13px}
 button:active{transform:scale(.98)}
 .primary{background:var(--red);border-color:var(--red);font-weight:bold}
-header{padding:15px 18px;background:#080809;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
-.logo{font-size:24px;font-weight:900;letter-spacing:-1px}
-.logo span{color:var(--red)}
-.sub{font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:4px}
+header{padding:10px 14px;background:#080809;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;min-height:72px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-img{display:block;width: min(190px,42vw);height:54px;object-fit:contain;object-position:left center}
+.sub{font-size:10px;letter-spacing:1.5px;color:var(--muted);margin-top:2px}
 .header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
 .plus{font-size:27px;width:44px;height:44px;padding:0;color:var(--red);border-color:#6a272d;background:#291a1e}
+.import-label{position:relative;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--panel2);color:white;border-radius:9px;padding:10px 13px;min-width:42px;min-height:42px;cursor:pointer;overflow:hidden}
+.import-label input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}
 .wrap{max-width:1250px;margin:auto;padding:16px}
 .searchbar{display:flex;gap:10px;margin-bottom:15px}
 input,select,textarea{width:100%;background:#101115;color:white;border:1px solid var(--line);border-radius:8px;padding:11px;outline:none}
@@ -45,23 +42,21 @@ input:focus,textarea:focus,select:focus{border-color:var(--red)}
 .axislabel{font-weight:bold;color:var(--muted);font-size:12px}
 .axisvalue{background:#24262d;border:1px solid #343740;border-radius:6px;padding:9px 3px;text-align:center;font-weight:bold;font-size:clamp(14px,2vw,19px);font-variant-numeric:tabular-nums;overflow:hidden}
 .globals .axisvalue{color:#ff7279;font-size:clamp(19px,2.5vw,25px);padding:13px 3px}
-.globalrow{margin-top:12px}
-.globalrow .axislabel{font-size:14px}
+.globalrow{margin-top:12px}.globalrow .axislabel{font-size:14px}
 .note{color:#c7c9d0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
-.preview{display:block;max-width:100%;max-height:230px;object-fit:contain;margin:12px auto;border-radius:8px;cursor:zoom-in}
 .plan-thumb{margin:8px 0 0;background:#191b20;border:1px solid var(--line);border-radius:9px;padding:5px;cursor:zoom-in;width:100%}
 .plan-thumb-title{font-size:10px;letter-spacing:.7px;color:var(--muted);text-align:center;margin:0 0 4px}
 .plan-thumb img{display:block;width:100%;height:190px;object-fit:contain;background:#101115;border-radius:5px}
 .plan-pdf{height:190px;display:flex;align-items:center;justify-content:center;gap:12px;background:#101115;border-radius:7px;color:#ff7279;font-weight:bold}
 .plan-pdf span{font-size:38px}
 .plan-hint{text-align:center;font-size:10px;color:var(--muted);margin-top:3px}
-#largeImage iframe{width:100%;height:calc(100vh - 95px);border:0;background:white;border-radius:8px}
 #imageModal{padding:0;background:#000}
 #imageModal .dialog{width:100%;max-width:none;height:100%;max-height:100%;overflow:hidden;border:0;border-radius:0;padding:8px;background:#050506;display:flex;flex-direction:column}
 .plan-toolbar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:4px 0 8px;flex-shrink:0}
 .plan-toolbar button{padding:9px 12px}
-.large-image-stage{flex:1;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;background:#050506;touch-action:pan-x pan-y}
-.large-image-stage img{display:block;width:100%;height:auto;max-width:none;max-height:none;object-fit:contain;transform-origin:top center}
+.large-image-stage{flex:1;min-height:0;overflow:hidden;position:relative;background:#050506;touch-action:none;display:flex;align-items:center;justify-content:center}
+.large-image-stage img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.large-image-stage iframe{width:100%;height:100%;border:0;background:white;border-radius:8px}
 #imageModal.landscape .plan-toolbar{justify-content:flex-start}
 #imageModal.landscape .large-image-stage{height:calc(100vh - 60px)}
 .empty{text-align:center;padding:40px 16px;color:var(--muted)}
@@ -85,8 +80,8 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
 .filelabel{display:block;background:#22252c;padding:11px;border-radius:8px;border:1px dashed #555;text-align:center;cursor:pointer}
 .filelabel input{display:none}
 @media(max-width:600px){
- .wrap{padding:10px}
- header{padding:12px}
+ .wrap{padding:10px}header{padding:9px 10px;min-height:64px}
+ .logo-img{width:min(155px,40vw);height:45px}
  .layout{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  .layout>.card{padding:7px}
  .sectiontitle{font-size:10px;letter-spacing:.2px;line-height:1.4}
@@ -105,493 +100,242 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:11px}
  .actions button{font-size:12px;padding:10px 5px}
  .editcolumns{grid-template-columns:1fr 1fr;gap:6px}
  .formgrid{grid-template-columns:1fr}
+ .header-right{gap:5px}.header-right button,.import-label{padding:8px 9px}
 }
 </style>
 </head>
 <body>
 <header>
- <div>
-  <div class="logo">Pliega<span>Pro</span></div>
-  <div class="sub">GESTIÓN DE PLEGADORA · DNC 60</div>
+ <div class="brand">
+  <img class="logo-img" src="PliegaPro_logo.png" alt="PliegaPro" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
+  <div id="logoFallback" style="display:none"><div style="font-size:24px;font-weight:900">Pliega<span style="color:var(--red)">Pro</span></div><div class="sub">GESTIÓN DE PLEGADORA · DNC 60</div></div>
  </div>
  <div class="header-right">
-  <button title="Importar copia de seguridad" onclick="importBackup()">↥</button>
+  <label class="import-label" title="Importar copia de seguridad" aria-label="Importar copia">↥
+   <input id="importInput" type="file" accept=".json,application/json">
+  </label>
   <button title="Exportar copia de seguridad" onclick="exportData()">↧</button>
   <button class="plus" title="Añadir referencia" onclick="openForm()">＋</button>
  </div>
 </header>
-
 <div class="wrap">
- <div class="searchbar">
-  <input id="search" placeholder="⌕ Buscar referencia o programa..." oninput="render()">
- </div>
+ <div class="searchbar"><input id="search" placeholder="⌕ Buscar referencia o programa..." oninput="render()"></div>
  <main id="main"></main>
 </div>
 <footer>PLIEGAPRO · DATOS GUARDADOS EN ESTE DISPOSITIVO</footer>
 
-<div class="modal" id="formModal">
- <div class="dialog">
-  <h2 id="formTitle">Nueva referencia</h2>
-  <form id="refForm">
-   <input type="hidden" id="editId">
-   <div class="formgrid">
-    <div class="field">
-     <label>Referencia</label>
-     <input id="refInput" required placeholder="Ej. 12345-GJ">
-    </div>
-    <div class="field">
-     <label>N.º de programa</label>
-     <input id="programInput" placeholder="Ej. 120">
-    </div>
-    <div class="field">
-     <label>Número de pliegues</label>
-     <select id="foldsInput">
-      <option value="2">2 pliegues</option>
-      <option value="4">4 pliegues</option>
-     </select>
-    </div>
-   </div>
-   <div class="field">
-    <label>Notas</label>
-    <textarea id="notesInput" rows="2" placeholder="Material, espesor, observaciones..."></textarea>
-   </div>
-   <div class="field">
-    <label>Plano o imagen (opcional)</label>
-    <label class="filelabel">＋ Seleccionar archivo
-     <input type="file" id="fileInput" accept="image/*,.pdf">
-    </label>
-    <div id="fileStatus" class="small"></div>
-   </div>
-   <div class="modalbuttons">
-    <button type="button" onclick="closeModal('formModal')">Cancelar</button>
-    <button class="primary" type="submit">Guardar referencia</button>
-   </div>
-  </form>
- </div>
-</div>
-
-<div class="modal" id="corModal">
- <div class="dialog">
-  <h2>Editar correcciones</h2>
-  <div class="small">Introduce los valores y pulsa Guardar correcciones.</div>
-  <form id="corForm">
-   <div class="editcolumns">
-    <div>
-     <div class="editbend">
-      <h3>PLIEGUE 1</h3><div id="editB0"></div>
-     </div>
-     <div class="editbend" id="editB2Box">
-      <h3>PLIEGUE 3</h3><div id="editB2"></div>
-     </div>
-    </div>
-    <div>
-     <div class="editbend">
-      <h3>PLIEGUE 2</h3><div id="editB1"></div>
-     </div>
-     <div class="editbend" id="editB3Box">
-      <h3>PLIEGUE 4</h3><div id="editB3"></div>
-     </div>
-    </div>
-   </div>
-   <div class="editbend">
-    <h3>GLOBALES</h3><div id="editGlobal"></div>
-   </div>
-   <div class="modalbuttons">
-    <button type="button" onclick="closeModal('corModal')">Cancelar</button>
-    <button class="primary" type="submit">Guardar correcciones</button>
-   </div>
-  </form>
- </div>
-</div>
-
-<div class="modal" id="imageModal" onclick="closeModal('imageModal')">
- <div class="dialog" onclick="event.stopPropagation()">
-  <div class="plan-toolbar">
-   <button onclick="zoomPlan(-0.25)">− Zoom</button>
-   <button onclick="resetPlanZoom()">100 %</button>
-   <button onclick="zoomPlan(0.25)">+ Zoom</button>
-   <button onclick="toggleLandscape()">Horizontal</button>
-   <button onclick="closeModal('imageModal')">Cerrar ✕</button>
+<div class="modal" id="formModal"><div class="dialog">
+ <h2 id="formTitle">Nueva referencia</h2>
+ <form id="refForm">
+  <input type="hidden" id="editId">
+  <div class="formgrid">
+   <div class="field"><label>Referencia</label><input id="refInput" required placeholder="Ej. 12345-GJ"></div>
+   <div class="field"><label>N.º de programa</label><input id="programInput" placeholder="Ej. 120"></div>
+   <div class="field"><label>Número de pliegues</label><select id="foldsInput"><option value="2">2 pliegues</option><option value="4">4 pliegues</option></select></div>
   </div>
-  <div id="largeImage" class="large-image-stage"></div>
- </div>
-</div>
+  <div class="field"><label>Notas</label><textarea id="notesInput" rows="2" placeholder="Material, espesor, observaciones..."></textarea></div>
+  <div class="field"><label>Plano o imagen (opcional)</label><label class="filelabel">＋ Seleccionar archivo<input type="file" id="fileInput" accept="image/*,.pdf"></label><div id="fileStatus" class="small"></div></div>
+  <div class="modalbuttons"><button type="button" onclick="closeModal('formModal')">Cancelar</button><button class="primary" type="submit">Guardar referencia</button></div>
+ </form>
+</div></div>
 
-<input id="importInput" type="file" accept=".json,application/json" hidden>
+<div class="modal" id="corModal"><div class="dialog">
+ <h2>Editar correcciones</h2><div class="small">Introduce los valores y pulsa Guardar correcciones.</div>
+ <form id="corForm">
+  <div class="editcolumns">
+   <div><div class="editbend"><h3>PLIEGUE 1</h3><div id="editB0"></div></div><div class="editbend" id="editB2Box"><h3>PLIEGUE 3</h3><div id="editB2"></div></div></div>
+   <div><div class="editbend"><h3>PLIEGUE 2</h3><div id="editB1"></div></div><div class="editbend" id="editB3Box"><h3>PLIEGUE 4</h3><div id="editB3"></div></div></div>
+  </div>
+  <div class="editbend"><h3>GLOBALES</h3><div id="editGlobal"></div></div>
+  <div class="modalbuttons"><button type="button" onclick="closeModal('corModal')">Cancelar</button><button class="primary" type="submit">Guardar correcciones</button></div>
+ </form>
+</div></div>
+
+<div class="modal" id="imageModal" onclick="closeModal('imageModal')"><div class="dialog" onclick="event.stopPropagation()">
+ <div class="plan-toolbar"><button onclick="toggleLandscape()">Horizontal</button><button onclick="closeModal('imageModal')">Cerrar ✕</button></div>
+ <div id="largeImage" class="large-image-stage"></div>
+</div></div>
 
 <script>
 const KEY='pliegapro_demo_v5';
 const $=id=>document.getElementById(id);
-let fileData=null,activeId=null,planZoom=1,planLandscape=false;
-
-function newCorrections(){return {X:0,Y:0,R:0}}
-
-function makeRef(ref,program,folds){
- return {
-  id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),
-  ref,program,folds,notes:'',
-  global:newCorrections(),
-  bends:[newCorrections(),newCorrections(),newCorrections(),newCorrections()],
-  fileData:null,fileName:''
- };
-}
-
-function loadRefs(){
- try{
-  const data=JSON.parse(localStorage.getItem(KEY)||'null');
-  if(Array.isArray(data))return data;
- }catch(e){}
- const a=makeRef('12345-GJ','120',4);
- a.notes='Referencia de ejemplo. Puedes editarla o eliminarla.';
- a.global={X:0.20,Y:-0.10,R:0};
- a.bends[0]={X:0.10,Y:0,R:0.20};
- const b=makeRef('67890-KX','215',2);
- b.notes='Ejemplo de pieza con dos pliegues.';
- return [a,b];
-}
-
+let fileData=null,activeId=null,planLandscape=false;
 let refs=loadRefs();
 
+function newCorrections(){return {X:0,Y:0,R:0}}
+function makeRef(ref,program,folds){
+ return {id:(crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random())),ref,program,folds,notes:'',global:newCorrections(),bends:[newCorrections(),newCorrections(),newCorrections(),newCorrections()],fileData:null,fileName:''};
+}
+function loadRefs(){
+ try{const data=JSON.parse(localStorage.getItem(KEY)||'null');if(Array.isArray(data))return data;}catch(e){}
+ const a=makeRef('12345-GJ','120',4);a.notes='Referencia de ejemplo. Puedes editarla o eliminarla.';a.global={X:0.20,Y:-0.10,R:0};a.bends[0]={X:0.10,Y:0,R:0.20};
+ const b=makeRef('67890-KX','215',2);b.notes='Ejemplo de pieza con dos pliegues.';return [a,b];
+}
 function persist(){
- try{
-  localStorage.setItem(KEY,JSON.stringify(refs));
- }catch(e){
-  alert('No hay espacio suficiente para guardar. Prueba con un archivo más pequeño.');
- }
+ try{localStorage.setItem(KEY,JSON.stringify(refs));return true;}
+ catch(e){alert('No hay espacio suficiente para guardar. Prueba con un archivo más pequeño.');return false;}
 }
-
-function fmt(v){
- const n=Number(v);
- return Number.isFinite(n)?n.toFixed(2):'0.00';
-}
-
-function esc(v){
- return String(v??'').replace(/[&<>"']/g,c=>({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
- }[c]));
-}
-
-function axisDisplay(obj){
- return ['Y','X','R'].map(k=>`
-  <div class="axisrow">
-   <div class="axislabel">${k}</div>
-   <div class="axisvalue">${esc(fmt(obj[k]))}</div>
-  </div>
- `).join('');
-}
-
-function bendDisplay(b,i){
- return `
-  <div class="bend">
-   <div class="bendtitle">PLIEGUE ${i+1}</div>
-   ${axisDisplay(b)}
-  </div>
- `;
-}
+function fmt(v){const n=Number(v);return Number.isFinite(n)?n.toFixed(2):'0.00'}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function axisDisplay(obj){return ['Y','X','R'].map(k=>`<div class="axisrow"><div class="axislabel">${k}</div><div class="axisvalue">${esc(fmt(obj?.[k]))}</div></div>`).join('')}
+function bendDisplay(b,i){return `<div class="bend"><div class="bendtitle">PLIEGUE ${i+1}</div>${axisDisplay(b)}</div>`}
 
 function render(){
  const q=$('search').value.trim().toLowerCase();
- const list=refs.filter(r=>
-  (r.ref+' '+r.program+' '+(r.notes||'')).toLowerCase().includes(q)
- );
-
- if(!list.length){
-  $('main').innerHTML=`
-   <div class="card empty">
-    <div class="big">＋</div>
-    <b>${refs.length?'No se encontraron referencias':'Todavía no hay referencias'}</b>
-    <p>Pulsa el + de la parte superior para añadir una referencia.</p>
-    <button onclick="importBackup()">Importar copia</button>
-   </div>
-  `;
-  return;
- }
-
+ const list=refs.filter(r=>(r.ref+' '+r.program+' '+(r.notes||'')).toLowerCase().includes(q));
+ if(!list.length){$('main').innerHTML=`<div class="card empty"><div class="big">＋</div><b>${refs.length?'No se encontraron referencias':'Todavía no hay referencias'}</b><p>Pulsa el + de la parte superior para añadir una referencia.</p><button onclick="openForm()">Añadir referencia</button></div>`;return}
  if(!activeId||!list.some(r=>r.id===activeId))activeId=list[0].id;
  const r=list.find(x=>x.id===activeId);
-
  $('main').innerHTML=`
-  <div class="refhead">
-   <div>
-    <div class="refname">${esc(r.ref)}</div>
-    <div class="meta">PROGRAMA: <b>${esc(r.program||'—')}</b> · ${r.folds} PLIEGUES</div>
-   </div>
-   <span class="tag">CYBELEC DNC 60</span>
-  </div>
-
-  <div class="actions">
-   <button class="primary" onclick="openCorrections('${r.id}')">✎ Editar correcciones</button>
-   <button onclick="openForm('${r.id}')">Editar referencia</button>
-   <button onclick="deleteRef('${r.id}')">Eliminar</button>
-  </div>
-
-  <div class="layout">
-   <section class="card">
-    ${bendDisplay(r.bends[0],0)}
-    ${r.folds>=4?bendDisplay(r.bends[2],2):''}
-   </section>
-
-   <section class="card">
-    ${bendDisplay(r.bends[1],1)}
-    ${r.folds>=4?bendDisplay(r.bends[3],3):''}
-   </section>
-
-   <section class="card globals">
-    <h2 class="sectiontitle">GLOBALES</h2>
-    ${['Y','X','R'].map(k=>`
-     <div class="globalrow">
-      <div class="axislabel">${k}</div>
-      <div class="axisvalue">${esc(fmt(r.global[k]))}</div>
-     </div>
-    `).join('')}
-   </section>
-  </div>
-
-  ${r.fileData&&r.fileData.startsWith('data:image/')?`
-   <div class="plan-thumb" role="button" tabindex="0" onclick="showImage('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showImage('${r.id}')}">
-    <div class="plan-thumb-title">PLANO · TOCA PARA AMPLIAR</div>
-    <img src="${r.fileData}" alt="Miniatura del plano">
-    <div class="plan-hint">Pulsa para verlo a pantalla completa</div>
-   </div>`:''}
-  ${r.fileData&&r.fileData.startsWith('data:application/pdf')?`
-   <div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}">
-    <div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div>
-    <div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div>
-    <div class="plan-hint">Pulsa para verlo a pantalla completa</div>
-   </div>`:''}
-
-  <div class="card" style="margin-top:12px">
-   <h2 class="sectiontitle">PLANO Y OBSERVACIONES</h2>
-   ${r.notes?`<div class="note">${esc(r.notes)}</div>`:'<div class="small">Sin observaciones.</div>'}
-   ${r.fileName?`<div class="small" style="margin-top:8px">Archivo: ${esc(r.fileName)}</div>`:''}
-  </div>
-
- `;
+ <div class="refhead"><div><div class="refname">${esc(r.ref)}</div><div class="meta">PROGRAMA: <b>${esc(r.program||'—')}</b> · ${r.folds} PLIEGUES</div></div><span class="tag">CYBELEC DNC 60</span></div>
+ <div class="actions"><button class="primary" onclick="openCorrections('${r.id}')">✎ Editar correcciones</button><button onclick="openForm('${r.id}')">Editar referencia</button><button onclick="deleteRef('${r.id}')">Eliminar</button></div>
+ <div class="layout">
+  <section class="card">${bendDisplay(r.bends[0],0)}${r.folds>=4?bendDisplay(r.bends[2],2):''}</section>
+  <section class="card">${bendDisplay(r.bends[1],1)}${r.folds>=4?bendDisplay(r.bends[3],3):''}</section>
+  <section class="card globals"><h2 class="sectiontitle">GLOBALES</h2>${['Y','X','R'].map(k=>`<div class="globalrow"><div class="axislabel">${k}</div><div class="axisvalue">${esc(fmt(r.global?.[k]))}</div></div>`).join('')}</section>
+ </div>
+ ${r.fileData&&r.fileData.startsWith('data:image/')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showImage('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showImage('${r.id}')}"><div class="plan-thumb-title">PLANO · TOCA PARA AMPLIAR</div><img src="${r.fileData}" alt="Miniatura del plano"><div class="plan-hint">Pellizca para ampliar y arrastra para moverte</div></div>`:''}
+ ${r.fileData&&r.fileData.startsWith('data:application/pdf')?`<div class="plan-thumb" role="button" tabindex="0" onclick="showPDF('${r.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPDF('${r.id}')}"><div class="plan-thumb-title">PLANO PDF · TOCA PARA AMPLIAR</div><div class="plan-pdf"><span>PDF</span><div>${esc(r.fileName||'Plano adjunto')}<br><small>Vista previa del documento</small></div></div><div class="plan-hint">Abre el PDF para verlo a pantalla completa</div></div>`:''}
+ <div class="card" style="margin-top:12px"><h2 class="sectiontitle">PLANO Y OBSERVACIONES</h2>${r.notes?`<div class="note">${esc(r.notes)}</div>`:'<div class="small">Sin observaciones.</div>'}${r.fileName?`<div class="small" style="margin-top:8px">Archivo: ${esc(r.fileName)}</div>`:''}</div>`;
 }
-
 function openModal(id){$(id).classList.add('show')}
-function closeModal(id){$(id).classList.remove('show')}
-
+function closeModal(id){$(id).classList.remove('show');if(id==='imageModal'){endLandscape()}}
 function openForm(id){
- const r=refs.find(x=>x.id===id);
- $('refForm').reset();
- fileData=r?.fileData||null;
- $('editId').value=r?.id||'';
- $('formTitle').textContent=r?'Editar referencia':'Nueva referencia';
- $('refInput').value=r?.ref||'';
- $('programInput').value=r?.program||'';
- $('foldsInput').value=String(r?.folds||2);
- $('notesInput').value=r?.notes||'';
- $('fileStatus').textContent=r?.fileName?'Archivo actual: '+r.fileName:'';
+ const r=refs.find(x=>x.id===id);$('refForm').reset();fileData=r?.fileData||null;
+ $('editId').value=r?.id||'';$('formTitle').textContent=r?'Editar referencia':'Nueva referencia';
+ $('refInput').value=r?.ref||'';$('programInput').value=r?.program||'';$('foldsInput').value=String(r?.folds||2);
+ $('notesInput').value=r?.notes||'';$('fileStatus').textContent=r?.fileName?'Archivo actual: '+r.fileName:'';
  openModal('formModal');
 }
-
 $('fileInput').addEventListener('change',async e=>{
- const f=e.target.files[0];
- if(!f)return;
-
- if(f.size>3*1024*1024){
-  alert('El archivo debe ocupar menos de 3 MB.');
-  e.target.value='';
-  return;
- }
-
- fileData=await new Promise((resolve,reject)=>{
-  const reader=new FileReader();
-  reader.onload=()=>resolve(reader.result);
-  reader.onerror=reject;
-  reader.readAsDataURL(f);
- });
- $('fileStatus').textContent='Seleccionado: '+f.name;
+ const f=e.target.files[0];if(!f)return;
+ if(f.size>3*1024*1024){alert('El archivo debe ocupar menos de 3 MB.');e.target.value='';return}
+ try{fileData=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(f)});$('fileStatus').textContent='Seleccionado: '+f.name}
+ catch(err){alert('No se pudo leer el archivo.');}
 });
-
 $('refForm').addEventListener('submit',e=>{
- e.preventDefault();
-
- const id=$('editId').value;
- let r=refs.find(x=>x.id===id);
-
- if(!r){
-  r=makeRef('','',Number($('foldsInput').value));
-  refs.unshift(r);
- }
-
- r.ref=$('refInput').value.trim();
- r.program=$('programInput').value.trim();
- r.folds=Number($('foldsInput').value);
- r.notes=$('notesInput').value.trim();
-
- if(fileData!==null)r.fileData=fileData;
-
- const f=$('fileInput').files[0];
- if(f)r.fileName=f.name;
-
- activeId=r.id;
- persist();
- closeModal('formModal');
- render();
+ e.preventDefault();const id=$('editId').value;let r=refs.find(x=>x.id===id);
+ if(!r){r=makeRef('','',Number($('foldsInput').value));refs.unshift(r)}
+ r.ref=$('refInput').value.trim();r.program=$('programInput').value.trim();r.folds=Number($('foldsInput').value);r.notes=$('notesInput').value.trim();
+ if(fileData!==null)r.fileData=fileData;const f=$('fileInput').files[0];if(f)r.fileName=f.name;
+ activeId=r.id;if(!persist())return;closeModal('formModal');render();
 });
-
-function axesEditor(prefix,obj){
- return ['Y','X','R'].map(k=>`
-  <div class="editaxis">
-   <div class="axislabel">${k}</div>
-   <input type="number" step="0.01" inputmode="decimal"
-    id="${prefix}_${k}" value="${fmt(obj[k])}"
-    onfocus="if(this.value==='0.00')this.value=''"
-    onblur="if(this.value.trim()==='')this.value='0.00'">
-  </div>
- `).join('');
-}
-
-function readAxes(prefix){
- const o={};
- ['Y','X','R'].forEach(k=>{
-  const v=$(prefix+'_'+k).value.trim();
-  o[k]=v===''?0:(Number(v)||0);
- });
- return o;
-}
-
+function axesEditor(prefix,obj){return ['Y','X','R'].map(k=>`<div class="editaxis"><div class="axislabel">${k}</div><input type="number" step="0.01" inputmode="decimal" id="${prefix}_${k}" value="${fmt(obj?.[k])}" onfocus="if(this.value==='0.00')this.value=''" onblur="if(this.value.trim()==='')this.value='0.00'"></div>`).join('')}
+function readAxes(prefix){const o={};['Y','X','R'].forEach(k=>{const v=$(prefix+'_'+k).value.trim();o[k]=v===''?0:(Number(v)||0)});return o}
 function openCorrections(id){
- const r=refs.find(x=>x.id===id);
- if(!r)return;
-
- activeId=id;
-
- for(let i=0;i<4;i++){
-  $('editB'+i).innerHTML=axesEditor('b'+i,r.bends[i]);
- }
-
- $('editGlobal').innerHTML=axesEditor('g',r.global);
- $('editB2Box').style.display=r.folds>=4?'block':'none';
- $('editB3Box').style.display=r.folds>=4?'block':'none';
-
- openModal('corModal');
+ const r=refs.find(x=>x.id===id);if(!r)return;activeId=id;
+ for(let i=0;i<4;i++)$('editB'+i).innerHTML=axesEditor('b'+i,r.bends[i]);
+ $('editGlobal').innerHTML=axesEditor('g',r.global);$('editB2Box').style.display=r.folds>=4?'block':'none';$('editB3Box').style.display=r.folds>=4?'block':'none';openModal('corModal');
 }
-
 $('corForm').addEventListener('submit',e=>{
- e.preventDefault();
-
- const r=refs.find(x=>x.id===activeId);
- if(!r)return;
-
- for(let i=0;i<4;i++){
-  r.bends[i]=readAxes('b'+i);
- }
-
- r.global=readAxes('g');
- persist();
- closeModal('corModal');
- render();
+ e.preventDefault();const r=refs.find(x=>x.id===activeId);if(!r)return;
+ for(let i=0;i<4;i++)r.bends[i]=readAxes('b'+i);r.global=readAxes('g');
+ if(!persist())return;closeModal('corModal');render();
 });
+function deleteRef(id){const r=refs.find(x=>x.id===id);if(!r)return;if(!confirm('¿Eliminar la referencia '+r.ref+'?'))return;refs=refs.filter(x=>x.id!==id);activeId=null;persist();render()}
 
-function deleteRef(id){
- const r=refs.find(x=>x.id===id);
- if(!r)return;
-
- if(!confirm('¿Eliminar la referencia '+r.ref+'?'))return;
-
- refs=refs.filter(x=>x.id!==id);
- activeId=null;
- persist();
- render();
-}
-
+/* Visor táctil de imágenes: pellizco, arrastre y doble toque. */
+let viewer={scale:1,x:0,y:0,pointers:new Map(),lastTap:0,startDistance:0,startScale:1,startX:0,startY:0,startMidX:0,startMidY:0,dragX:0,dragY:0};
+function applyPlanTransform(){const img=$('planLargeImage');if(img)img.style.transform=`translate(${viewer.x}px,${viewer.y}px) scale(${viewer.scale})`}
+function resetPlanZoom(){viewer.scale=1;viewer.x=0;viewer.y=0;applyPlanTransform()}
 function showImage(id){
- const r=refs.find(x=>x.id===id);
- if(!r?.fileData)return;
- planZoom=1;
- planLandscape=false;
- $('imageModal').classList.remove('landscape');
- $('largeImage').innerHTML=`<img id="planLargeImage" src="${r.fileData}" alt="Plano ampliado" style="width:100%">`;
- openModal('imageModal');
+ const r=refs.find(x=>x.id===id);if(!r?.fileData)return;
+ viewer={scale:1,x:0,y:0,pointers:new Map(),lastTap:0,startDistance:0,startScale:1,startX:0,startY:0,startMidX:0,startMidY:0,dragX:0,dragY:0};
+ planLandscape=false;$('imageModal').classList.remove('landscape');
+ $('largeImage').innerHTML=`<img id="planLargeImage" src="${r.fileData}" alt="Plano ampliado">`;
+ openModal('imageModal');setupTouchViewer();
 }
-
+function setupTouchViewer(){
+ const stage=$('largeImage');stage.onpointerdown=pointerDown;stage.onpointermove=pointerMove;stage.onpointerup=pointerUp;stage.onpointercancel=pointerUp;
+}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function midpoint(a,b){return{x:(a.x+b.x)/2,y:(a.y+b.y)/2}}
+function pointerDown(e){
+ if(!e.isPrimary&&e.pointerType==='mouse')return;
+ const stage=$('largeImage');stage.setPointerCapture?.(e.pointerId);
+ viewer.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(viewer.pointers.size===1){viewer.dragX=e.clientX-viewer.x;viewer.dragY=e.clientY-viewer.y;viewer.lastDown=Date.now()}
+ if(viewer.pointers.size===2){
+  const pts=[...viewer.pointers.values()],mid=midpoint(pts[0],pts[1]);
+  viewer.startDistance=distance(pts[0],pts[1]);viewer.startScale=viewer.scale;
+  viewer.startX=viewer.x;viewer.startY=viewer.y;viewer.startMidX=mid.x;viewer.startMidY=mid.y;
+ }
+ e.preventDefault();
+}
+function pointerMove(e){
+ if(!viewer.pointers.has(e.pointerId))return;
+ viewer.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(viewer.pointers.size===2){
+  const pts=[...viewer.pointers.values()],d=distance(pts[0],pts[1]),mid=midpoint(pts[0],pts[1]);
+  const next=Math.min(6,Math.max(1,viewer.startScale*(d/(viewer.startDistance||d))));
+  const ratio=next/viewer.startScale;
+  viewer.scale=next;
+  viewer.x=mid.x-(viewer.startMidX-viewer.startX)*ratio-viewer.startMidX+viewer.startMidX;
+  viewer.y=mid.y-(viewer.startMidY-viewer.startY)*ratio-viewer.startMidY+viewer.startMidY;
+  // El punto medio acompaña el movimiento de los dedos; el zoom se centra entre ambos.
+  viewer.x=viewer.startX+(mid.x-viewer.startMidX)+(viewer.startMidX-viewer.startX)*(1-ratio);
+  viewer.y=viewer.startY+(mid.y-viewer.startMidY)+(viewer.startMidY-viewer.startY)*(1-ratio);
+ }else if(viewer.pointers.size===1&&viewer.scale>1){
+  viewer.x=e.clientX-viewer.dragX;viewer.y=e.clientY-viewer.dragY;
+ }
+ applyPlanTransform();e.preventDefault();
+}
+function pointerUp(e){
+ const wasTwo=viewer.pointers.size===2;viewer.pointers.delete(e.pointerId);
+ if(viewer.pointers.size===1){const p=[...viewer.pointers.values()][0];viewer.dragX=p.x-viewer.x;viewer.dragY=p.y-viewer.y}
+ if(viewer.pointers.size===0){
+  const now=Date.now();if(now-viewer.lastTap<300&&viewer.scale===1)doubleTapZoom();viewer.lastTap=now;
+ }
+}
+function doubleTapZoom(){if(viewer.scale>1.05){resetPlanZoom();return}viewer.scale=2.5;const stage=$('largeImage'),rect=stage.getBoundingClientRect();viewer.x=rect.width/2-(rect.width/2)*viewer.scale;viewer.y=rect.height/2-(rect.height/2)*viewer.scale;applyPlanTransform()}
 function showPDF(id){
- const r=refs.find(x=>x.id===id);
- if(!r?.fileData)return;
- planZoom=1;
- planLandscape=false;
- $('imageModal').classList.remove('landscape');
- $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${r.fileData}"></iframe>`;
- openModal('imageModal');
+ const r=refs.find(x=>x.id===id);if(!r?.fileData)return;planLandscape=false;$('imageModal').classList.remove('landscape');
+ $('largeImage').innerHTML=`<iframe title="Plano PDF ampliado" src="${r.fileData}"></iframe>`;openModal('imageModal');
 }
-
-function zoomPlan(change){
- const img=$('planLargeImage');
- if(!img)return;
- planZoom=Math.min(4,Math.max(0.5,planZoom+change));
- img.style.width=(planZoom*100)+'%';
-}
-
-function resetPlanZoom(){
- const img=$('planLargeImage');
- if(!img)return;
- planZoom=1;
- img.style.width='100%';
- $('largeImage').scrollTo({top:0,left:0,behavior:'smooth'});
-}
-
 async function toggleLandscape(){
- planLandscape=!planLandscape;
- $('imageModal').classList.toggle('landscape',planLandscape);
- if(planLandscape){
-  try{
-   if(!document.fullscreenElement && document.documentElement.requestFullscreen){
-    await document.documentElement.requestFullscreen();
-   }
-   if(screen.orientation && screen.orientation.lock){
-    await screen.orientation.lock('landscape');
-   }
-  }catch(e){
-   // Algunos navegadores/WebView no permiten bloquear la orientación.
-  }
- }else{
-  try{
-   if(screen.orientation && screen.orientation.unlock)screen.orientation.unlock();
-   if(document.fullscreenElement && document.exitFullscreen)await document.exitFullscreen();
-  }catch(e){}
- }
+ planLandscape=!planLandscape;$('imageModal').classList.toggle('landscape',planLandscape);
+ if(planLandscape){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();if(screen.orientation?.lock)await screen.orientation.lock('landscape')}catch(e){}}
+ else endLandscape();
 }
+async function endLandscape(){try{if(screen.orientation?.unlock)screen.orientation.unlock();if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}planLandscape=false;$('imageModal').classList.remove('landscape')}
 
+/* Exportación JSON */
 function exportData(){
- const blob=new Blob([JSON.stringify(refs,null,2)],{type:'application/json'});
- const url=URL.createObjectURL(blob);
- const a=document.createElement('a');
- a.href=url;
- a.download='PliegaPro_copia.json';
- a.click();
- URL.revokeObjectURL(url);
-}
-
-function importBackup(){
- $('importInput').click();
-}
-
-$('importInput').addEventListener('change',async e=>{
- const f=e.target.files[0];
- if(!f)return;
-
  try{
-  const data=JSON.parse(await f.text());
+  const blob=new Blob([JSON.stringify(refs,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PliegaPro_copia.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+ }catch(e){alert('No se pudo preparar la copia de seguridad.')}
+}
 
-  if(!Array.isArray(data)||!data.every(r=>r.ref&&Array.isArray(r.bends))){
-   throw Error();
-  }
-
-  if(!confirm('La importación sustituirá TODAS las referencias actuales por las de la copia. Exporta una copia antes si quieres conservar los datos actuales. ¿Continuar?'))return;
-
-  refs=data;
-  activeId=null;
-  persist();
-  render();
-  alert('Copia importada.');
- }catch(err){
-  alert('El archivo no parece una copia válida de PliegaPro.');
- }
-
- e.target.value='';
+/* Importación desde selector visible/táctil compatible con Android WebView. */
+function normalizeImportedRecord(item,index){
+ if(!item||typeof item!=='object'||!String(item.ref||'').trim())throw new Error('Referencia incompleta');
+ const folds=Number(item.folds)===4?4:2;
+ const corr=o=>({X:Number(o?.X)||0,Y:Number(o?.Y)||0,R:Number(o?.R)||0});
+ const bends=Array.isArray(item.bends)?item.bends.slice(0,4).map(corr):[];
+ while(bends.length<4)bends.push(newCorrections());
+ return {
+  id:String(item.id||('import-'+Date.now()+'-'+index+'-'+Math.random().toString(16).slice(2))),
+  ref:String(item.ref).trim(),program:String(item.program??''),
+  folds,notes:String(item.notes??''),global:corr(item.global),
+  bends,fileData:typeof item.fileData==='string'?item.fileData:null,
+  fileName:String(item.fileName??'')
+ };
+}
+$('importInput').addEventListener('change',async e=>{
+ const input=e.target, f=input.files&&input.files[0];if(!f)return;
+ try{
+  if(f.size>30*1024*1024)throw new Error('La copia supera los 30 MB.');
+  const raw=await f.text(),data=JSON.parse(raw);
+  if(!Array.isArray(data)||data.length===0)throw new Error('El archivo no contiene una lista de referencias.');
+  const imported=data.map(normalizeImportedRecord);
+  if(!confirm('Se van a sustituir las '+refs.length+' referencias actuales por las '+imported.length+' de la copia. ¿Continuar?'))return;
+  const previous=refs;refs=imported;
+  if(!persist()){refs=previous;throw new Error('No se pudieron guardar los datos importados. Los datos anteriores se han conservado.')}
+  activeId=refs[0]?.id||null;render();alert('Copia importada correctamente ('+refs.length+' referencias).');
+ }catch(err){alert('No se pudo importar la copia: '+(err.message||'archivo no válido')+'. Tus referencias actuales no se han sustituido.')}
+ finally{input.value=''}
 });
 
 render();
